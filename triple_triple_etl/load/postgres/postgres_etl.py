@@ -133,7 +133,7 @@ class PostgresETL(object):
 
         return tmp_dir
 
-    def tables_from_json(self):
+    def transform(self):
         filepath = os.path.join(
             self.tmp_dir,
             os.listdir(self.tmp_dir)[0]
@@ -153,7 +153,7 @@ class PostgresETL(object):
 
     def run(self):
         _ = self.extract_from_s3()
-        self.tables_from_json()
+        self.transform()
 
         all_csvs = ['games.csv', 'players.csv',
                     'teams.csv', 'game_positions.csv']
