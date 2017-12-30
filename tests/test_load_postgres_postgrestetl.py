@@ -91,6 +91,33 @@ class TestPostgresETL(unittest.TestCase):
         assert etl.filename == tempfile_mock
         assert directory == '/tmp/random_letters'
 
+    def test_PostgresETL_transform(self):
+        tempfile_mock = mock.Mock()
+        filepath_mock = mock.Mock()
+        os_mock = mock.Mock(return_value=filepath_mock)
+        get_all_tables_dict_mock = mock.Mock()
+        save_all_tables_mock = mock.Mock()
+        shutil_mock = mock.Mock()
+        
+        # tempfile_mock.mkdtemp.return_value = '/tmp/random_letters'
+
+        etl = PostgresETL(filename=tempfile_mock)
+        etl.tmp_dir = mock.Mock()
+
+        patches = {
+            # 'os.path.join': os_mock,
+            'get_all_tables_dict': get_all_tables_dict_mock,
+            'save_all_tables': save_all_tables_mock,
+            # 'shutil.rmtree': shutil_mock,
+            'open': create_mock_context_manager([filepath_mock])
+        }
+        path = 'triple_triple_etl.load.postgres.postgres_etl'
+        with mock.patch.multiple(path, **patches):
+            with mock.patch('os.path.join') as os_mock:
+                etl.transform()
+                os_mock.assert_called_once_with()
+        # get_all_tables_dict_mock.assert_called_once_with()
+
 
 if __name__ == '__main__':
     unittest.main()
