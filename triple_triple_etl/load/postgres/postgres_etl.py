@@ -119,6 +119,7 @@ class PostgresETL(object):
         self.bucket_base = bucket_base
         self.raw_data_dir = raw_data_dir
         self.storage_dir = storage_dir
+        self.tmp_dir = None
 
     def extract_from_s3(self):
         filepath = s3download(
