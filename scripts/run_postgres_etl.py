@@ -1,5 +1,5 @@
-from s3 import get_game_files
-from postgres_etl import PostgresETL
+from triple_triple_etl.core.s3 import get_game_files
+from triple_triple_etl.load.postgres.postgres_etl import PostgresETL
 
 
 if __name__ == '__main__':
