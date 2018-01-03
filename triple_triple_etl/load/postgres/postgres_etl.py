@@ -41,7 +41,7 @@ def get_cursor():
             cursor.close()
 
 
-def create_rawdata_tables():
+def create_s3_rawdata_tables():
     query = """
         BEGIN TRANSACTION;
 
