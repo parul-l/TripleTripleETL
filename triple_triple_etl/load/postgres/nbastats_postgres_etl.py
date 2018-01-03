@@ -72,7 +72,7 @@ def create_nbastats_tables():
           turnovers INTEGER,
           personal_fouls INTEGER,
           points INTEGER,
-          plus_minus INTEGER            
+          plus_minus FLOAT            
         );
         END TRANSACTION;
     """
