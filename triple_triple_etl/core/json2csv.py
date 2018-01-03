@@ -151,5 +151,5 @@ def get_all_tables_dict(game_data_dict):
 
 def save_all_tables(all_tables_dict, storage_dir=DATATABLES_DIR):
     for name, df in all_tables_dict.items():
-        filepath = os.path.join(DATATABLES_DIR, name + '.csv')
+        filepath = os.path.join(storage_dir, name + '.csv')
         df.to_csv(filepath, index=False)
