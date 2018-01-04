@@ -1,6 +1,10 @@
-from .postgres_etl import PostgresETL, get_cursor
+from .nbastats_postgres_etl import NBAStatsPostgresETL
+from .postgres_connection import get_cursor
+from .s3_postgres_etl import S3PostgresETL
+
 
 __all__ = [
-    'PostgresETL',
+    'S3PostgresETL',
+    'NBAStatsPostgresETL',
     'get_cursor'
 ]
