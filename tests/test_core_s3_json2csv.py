@@ -3,15 +3,14 @@ import os
 import pandas.api.types as ptypes
 import unittest
 
-from tests.fixtures.mock_rawdata import data
+from tests.fixtures.mock_s3rawdata import data
 from triple_triple_etl.constants import DATATABLES_DIR
 from triple_triple_etl.core.s3_json2csv import (
     get_player_info,
     get_team_info,
     get_game_info,
     get_game_position_info,
-    get_all_tables_dict,
-    save_all_tables
+    get_all_tables_dict
 )
 
 
@@ -183,19 +182,6 @@ class TestS3Json2Csv(unittest.TestCase):
             first=set(all_tables.keys()),
             second={'players', 'teams', 'games', 'game_positions'}
         )
-
-    def test_save_all_tables(self):
-        all_tables = get_all_tables_dict(data)
-        save_all_tables(all_tables)
-        filenames = [
-            'players.csv',
-            'teams.csv',
-            'games.csv',
-            'game_positions.csv'
-        ]
-        for f in filenames:
-            filepath = os.path.join(DATATABLES_DIR, f)
-            self.assertTrue(os.path.exists(filepath))
 
 
 if __name__ == '__main__':
