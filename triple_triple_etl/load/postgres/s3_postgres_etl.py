@@ -4,10 +4,8 @@ import os
 import shutil
 import tempfile
 
-import psycopg2
 
 from triple_triple_etl.constants import (
-    config,
     DATASETS_DIR,
     DATATABLES_DIR
 )
