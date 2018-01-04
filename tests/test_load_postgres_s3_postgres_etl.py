@@ -43,14 +43,14 @@ class TestS3PostgresETL(unittest.TestCase):
         os_mock.listdir.return_value = ['thingy']
 
         json_mock = mock.Mock()
-        json_mock.load.return_value = {'a': 1}
+        json_mock.load.return_value = {'gameid': 1}
 
         shutil_mock = mock.Mock()
 
         get_all_tables_dict_mock = mock.Mock(return_value='a_dict')
         save_all_tables_mock = mock.Mock()
 
-        etl = S3PostgresETL(filename='random_filename', storage_dir='here')
+        etl = S3PostgresETL(filename='random/filename', storage_dir='here')
         etl.tmp_dir = '/tmp/random'
 
         patches = {
@@ -65,8 +65,10 @@ class TestS3PostgresETL(unittest.TestCase):
         with mock.patch.multiple(path, **patches):
             etl.transform()
 
+        assert etl.season == 'random'
+        assert etl.game_id == 1
         os_mock.path.join.assert_called_once_with('/tmp/random', 'thingy')
-        get_all_tables_dict_mock.assert_called_once_with({'a': 1})
+        get_all_tables_dict_mock.assert_called_once_with({'gameid': 1})
         save_all_tables_mock.assert_called_once_with(
             'a_dict',
             storage_dir='here'
