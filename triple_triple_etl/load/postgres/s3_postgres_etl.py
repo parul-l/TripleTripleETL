@@ -11,10 +11,8 @@ from triple_triple_etl.constants import (
     DATASETS_DIR,
     DATATABLES_DIR
 )
-from triple_triple_etl.core.json2csv import (
-    get_all_tables_dict,
-    save_all_tables
-)
+from triple_triple_etl.core.s3_json2csv import get_all_tables_dict
+
 from triple_triple_etl.core.s3 import s3download, extract2dir
 from triple_triple_etl.load.postgres.postgres_connection import get_cursor
 from triple_triple_etl.load.postgres.postgres_helper import  (
@@ -86,10 +84,14 @@ class S3PostgresETL(object):
     def __init__(
             self,
             filename,
+            season=None,
+            game_id=None,
             bucket_base='nba-player-positions',
             raw_data_dir=DATASETS_DIR, storage_dir=DATATABLES_DIR
     ):
         self.filename = filename
+        self.game_id = game_id
+        self.season = season
         self.bucket_base = bucket_base
         self.raw_data_dir = raw_data_dir
         self.storage_dir = storage_dir
@@ -109,12 +111,21 @@ class S3PostgresETL(object):
         return tmp_dir
 
     def transform(self):
+        # update season
+        self.season = self.filename.split('/')[0]
+        
         filepath = os.path.join(
             self.tmp_dir,
             os.listdir(self.tmp_dir)[0]
         )
         with open(filepath) as f:
-            all_tables_dict = get_all_tables_dict(json.load(f))
+            game_data_dict = json.load(f)
+
+            # update game_id
+            self.game_id = game_data_dict['gameid']
+
+            # get game dataframes
+            all_tables_dict = get_all_tables_dict(game_data_dict)
             save_all_tables(all_tables_dict, storage_dir=self.storage_dir)
 
             shutil.rmtree(self.tmp_dir)
