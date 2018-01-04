@@ -1,11 +1,7 @@
-import os
+import unittest
 import mock
 
-import unittest
-
 from tests.helper_methods import create_mock_context_manager
-from triple_triple_etl.constants import config
-
 from triple_triple_etl.load.postgres.s3_postgres_etl import S3PostgresETL
 
 
