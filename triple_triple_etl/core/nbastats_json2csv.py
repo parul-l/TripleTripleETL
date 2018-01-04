@@ -139,4 +139,4 @@ def get_all_nbastats_tables(play_data, box_score_data):
     return {
         'play_by_play': get_df_play_by_play(play_data),
         'box_score': get_df_box_score(box_score_data)
-}
+    }
