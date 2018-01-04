@@ -1,3 +1,4 @@
+import copy
 import os
 
 import pandas.api.types as ptypes
@@ -16,9 +17,11 @@ from triple_triple_etl.core.s3_json2csv import (
 
 class TestS3Json2Csv(unittest.TestCase):
     """Tests for json2csv.py"""
+    def setUp(self):
+        self.data = copy.deepcopy(data)
 
-    def test_get_player_info(self, data=data):
-        df = get_player_info(data)
+    def test_get_player_info(self):
+        df = get_player_info(self.data)
 
         # all columns exist and named correctly
         self.assertEqual(
@@ -62,7 +65,7 @@ class TestS3Json2Csv(unittest.TestCase):
         )
 
     def test_get_team_info(self):
-        df = get_team_info(data)
+        df = get_team_info(self.data)
 
         # all columns exist and named correctly
         self.assertEqual(
@@ -99,7 +102,7 @@ class TestS3Json2Csv(unittest.TestCase):
         self.assertEqual(first=len(set(df.id.values)), second=2)
 
     def test_get_game_info(self):
-        df = get_game_info(data)
+        df = get_game_info(self.data)
 
         # all columns exist and named correctly
         self.assertEqual(
@@ -119,7 +122,7 @@ class TestS3Json2Csv(unittest.TestCase):
         self.assertTrue(ptypes.is_datetime64_any_dtype(df['start_time']))
 
     def test_get_game_position_info(self):
-        df = get_game_position_info(data)
+        df = get_game_position_info(self.data)
 
         # all columns exist and named correctly
         self.assertEqual(
@@ -176,7 +179,7 @@ class TestS3Json2Csv(unittest.TestCase):
         )
 
     def test_get_all_tables_dict(self):
-        all_tables = get_all_tables_dict(data)
+        all_tables = get_all_tables_dict(self.data)
 
         self.assertEqual(
             first=set(all_tables.keys()),
