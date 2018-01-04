@@ -1,16 +1,13 @@
-import contextlib
 import json
 import os
 import shutil
 import tempfile
-
 
 from triple_triple_etl.constants import (
     DATASETS_DIR,
     DATATABLES_DIR
 )
 from triple_triple_etl.core.s3_json2csv import get_all_tables_dict
-
 from triple_triple_etl.core.s3 import s3download, extract2dir
 from triple_triple_etl.load.postgres.postgres_connection import get_cursor
 from triple_triple_etl.load.postgres.postgres_helper import  (

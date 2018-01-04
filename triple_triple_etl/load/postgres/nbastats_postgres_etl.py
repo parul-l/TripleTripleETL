@@ -1,5 +1,4 @@
 import os
-import tempfile
 
 from triple_triple_etl.constants import DATATABLES_DIR
 from triple_triple_etl.core.nbastats_get_data import get_data

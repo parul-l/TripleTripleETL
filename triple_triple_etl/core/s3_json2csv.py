@@ -1,5 +1,4 @@
 from datetime import datetime
-import os
 import requests
 
 from bs4 import BeautifulSoup
@@ -37,7 +36,7 @@ def get_player_info(game_data_dict):
         'first_name',
         'team_id',
         'jersey_number',
-        'position',
+    osition',
         'start_date',
         'end_date'
     ]
@@ -103,8 +102,7 @@ def get_game_info(game_data_dict):
     df = pd.DataFrame.from_dict([game_info])
     return df[['id', 'start_time', 'home_team_id', 'visitor_team_id']]
 
-
-def get_game_position_info(game_data_dict):
+osition_info(game_data_dict):
     col_headers = [
         'game_id',
         'event_id',
@@ -120,7 +118,7 @@ def get_game_position_info(game_data_dict):
     ]
     game_id = game_data_dict['gameid']
 
-    player_position_data = []
+osition_data = []
     for event in game_data_dict['events']:
         event_id = int(event['eventId'])
         moments = event['moments']
@@ -132,7 +130,7 @@ def get_game_position_info(game_data_dict):
             shot_clock = moment[3]
 
             for player_data in moment[5]:
-                player_position_data.append(
+            osition_data.append(
                     [game_id, event_id, time_stamp,
                      period, period_clock, shot_clock] +
                     player_data
