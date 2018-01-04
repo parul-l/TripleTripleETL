@@ -2,17 +2,18 @@ import os
 import tempfile
 
 import boto3
-import patoolib     # pip install patool
+import patoolib
 
 from triple_triple_etl.constants import DATASETS_DIR
+
 
 s3 = boto3.resource('s3')
 
 
 def get_game_files(bucket_name):
     bucket = s3.Bucket(bucket_name)
-    return [object.key for object in bucket.objects.all()
-            if 'Raw' not in object.key and '.7z' in object.key]
+    return [obj.key for obj in bucket.objects.all()
+            if 'Raw' not in obj.key and '.7z' in obj.key]
 
 
 def s3download(bucket_name, filename):
