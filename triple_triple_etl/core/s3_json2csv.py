@@ -36,7 +36,7 @@ def get_player_info(game_data_dict):
         'first_name',
         'team_id',
         'jersey_number',
-    osition',
+        'position',
         'start_date',
         'end_date'
     ]
@@ -102,7 +102,8 @@ def get_game_info(game_data_dict):
     df = pd.DataFrame.from_dict([game_info])
     return df[['id', 'start_time', 'home_team_id', 'visitor_team_id']]
 
-osition_info(game_data_dict):
+
+def get_game_position_info(game_data_dict):
     col_headers = [
         'game_id',
         'event_id',
@@ -118,7 +119,7 @@ osition_info(game_data_dict):
     ]
     game_id = game_data_dict['gameid']
 
-osition_data = []
+    player_position_data = []
     for event in game_data_dict['events']:
         event_id = int(event['eventId'])
         moments = event['moments']
@@ -130,7 +131,7 @@ osition_data = []
             shot_clock = moment[3]
 
             for player_data in moment[5]:
-            osition_data.append(
+                player_position_data.append(
                     [game_id, event_id, time_stamp,
                      period, period_clock, shot_clock] +
                     player_data
