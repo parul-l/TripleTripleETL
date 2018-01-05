@@ -23,8 +23,8 @@ def s3download(bucket_name, filename):
     try:
         bucket = s3.Bucket(bucket_name)
         bucket.download_file(Key=filename, Filename=filepath)
-
         return filepath
+
     except boto3.exceptions.botocore.client.ClientError:
         pass
 
