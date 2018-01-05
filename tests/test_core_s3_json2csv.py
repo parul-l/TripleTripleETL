@@ -1,8 +1,8 @@
 import copy
-import os
 
-import pandas.api.types as ptypes
 import unittest
+import pandas.api.types as ptypes
+
 
 from tests.fixtures.mock_s3rawdata import data
 from triple_triple_etl.constants import DATATABLES_DIR
