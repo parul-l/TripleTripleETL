@@ -75,21 +75,26 @@ def create_s3_rawdata_tables():
         cursor.execute(query)
 
 
+def get_season(filename):
+    years = filename.split('/')[0].split('-')
+    return '-'.join([years[0], years[1][-2:]])
+
+
 class S3PostgresETL(object):
     def __init__(
             self,
             filename,
-            season=None,
             game_id=None,
             bucket_base='nba-player-positions',
-            raw_data_dir=DATASETS_DIR, storage_dir=DATATABLES_DIR
+            raw_data_dir=DATASETS_DIR,
+            storage_dir=DATATABLES_DIR
     ):
         self.filename = filename
         self.game_id = game_id
-        self.season = season
         self.bucket_base = bucket_base
         self.raw_data_dir = raw_data_dir
         self.storage_dir = storage_dir
+        self.season = get_season(filename=self.filename)
         self.tmp_dir = None
 
     def extract_from_s3(self):
@@ -105,10 +110,7 @@ class S3PostgresETL(object):
 
         return tmp_dir
 
-    def transform(self):
-        # update season
-        self.season = self.filename.split('/')[0]
-        
+    def transform(self):        
         filepath = os.path.join(
             self.tmp_dir,
             os.listdir(self.tmp_dir)[0]
