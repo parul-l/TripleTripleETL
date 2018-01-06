@@ -1,12 +1,14 @@
 from triple_triple_etl.load.postgres.nbastats_postgres_etl import NBAStatsPostgresETL
-
+from triple_triple_etl.constants import (
+    BASE_URL_PLAY,
+    BASE_URL_BOX_SCORE_TRADITIONAL
+)
 
 if __name__ == '__main__':
     game_id = '0021500568'
     season = '2015-16'
-
-    base_url_play = 'http://stats.nba.com/stats/playbyplayv2'
-    params_play = {
+    
+    params = {
         'EndPeriod': '10',      # default by NBA stats (acceptablevalues: 1, 2, 3, 4)
         'EndRange': '55800',    # not sure what this is
         'GameID': game_id,
@@ -17,28 +19,15 @@ if __name__ == '__main__':
         'StartRange': '0',      # not sure what this is
     }
 
-    base_url_box_score_traditional = 'http://stats.nba.com/stats/boxscoretraditionalv2'
-
-    params_box_score = {
-        'EndPeriod': '10',
-        'EndRange': '55800',
-        'GameID': game_id,
-        'RangeType': '2',
-        'Season': '2015-16',
-        'SeasonType': 'Regular Season',
-        'StartPeriod': '1',
-        'StartRange': '0'
-    }
-
     pbp_input = {
-        'base_url': base_url_play,
-        'params': params_play,
+        'base_url': BASE_URL_PLAY,
+        'params': params,
         'data_content': 1
     }
 
     bs_input = {
-        'base_url': base_url_box_score_traditional,
-        'params': params_box_score,
+        'base_url': BASE_URL_BOX_SCORE_TRADITIONAL,
+        'params': params,
         'data_content': 0
     }
 
