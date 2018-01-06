@@ -1,0 +1,56 @@
+---
+tables:
+  games:
+    columns:
+      - name: id
+        constraints:
+          - primary key
+      - name: start_time
+      - name: home_team_id
+      - name: visitor_team_id
+  players:
+    columns:
+      - name: id
+        constraints:
+          - primary key
+      - name: last_name
+      - name: first_name
+      - name: team_id
+      - name: jersey_number
+      - name: position
+      - name: start_date
+        constraints:
+          - primary key
+      - name: end_date
+  teams:
+    columns:
+      - name: game_id
+        constraints:
+          - primary key
+      - name: name
+      - name: conference
+      - name: division
+      - name: city
+      - name: state
+      - name: zipcode
+      - name: start_date
+        constraints:
+          - primary key
+      - name: end_date  
+  game_positions:
+    columns:
+      - name: game_id
+        constraints:
+          - foreign key (references games (id))
+      - name: event_id
+      - name: time_stamp
+        constraints:
+          - primary key
+      - name: period
+      - name: period_clock
+      - name: shot_clock
+      - name: team_id
+      - name: player_id
+      - name: x_coordinate
+      - name: y_coordinate
+      - name: z_coordinate
