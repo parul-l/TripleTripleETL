@@ -2,16 +2,24 @@ import unittest
 import mock
 
 from tests.helper_methods import create_mock_context_manager
-from triple_triple_etl.load.postgres.s3_postgres_etl import S3PostgresETL
+from triple_triple_etl.load.postgres.s3_postgres_etl import (
+    get_season,
+    S3PostgresETL
+)
+
+class TestS3PostgresETLHelper(unittest.TestCase):
+    def test_get_season(self):
+        filename = '2015-2016/someteams'
+        assert get_season(filename) == '2015-16'
 
 
 class TestS3PostgresETL(unittest.TestCase):
     """Tests for s3_postgres_etl.py"""
 
     def test_extract_from_s3(self):
-        tempfile_mock = mock.Mock()
+        tempfile_mock = mock.Mock(return_value='1971-1972/filename')
         bucket_mock = mock.Mock(return_value='nba-player-positions')
-        etl = S3PostgresETL(filename=tempfile_mock)
+        etl = S3PostgresETL(filename=tempfile_mock.return_value)
 
         s3download_mock = mock.Mock(return_value='some.txt')
         extract2dir_mock = mock.Mock()
@@ -28,9 +36,9 @@ class TestS3PostgresETL(unittest.TestCase):
             directory = etl.extract_from_s3()
         s3download_mock.assert_called_once_with(
             bucket_name=bucket_mock.return_value,
-            filename=tempfile_mock
+            filename=tempfile_mock.return_value
         )
-        assert etl.filename == tempfile_mock
+        assert etl.filename == tempfile_mock.return_value
         assert directory == '/tmp/random_letters'
 
     def test_transform(self):
@@ -46,7 +54,7 @@ class TestS3PostgresETL(unittest.TestCase):
         get_all_tables_dict_mock = mock.Mock(return_value='a_dict')
         save_all_tables_mock = mock.Mock()
 
-        etl = S3PostgresETL(filename='random/filename', storage_dir='here')
+        etl = S3PostgresETL(filename='1971-1972/filename', storage_dir='here')
         etl.tmp_dir = '/tmp/random'
 
         patches = {
@@ -61,7 +69,6 @@ class TestS3PostgresETL(unittest.TestCase):
         with mock.patch.multiple(path, **patches):
             etl.transform()
 
-        assert etl.season == 'random'
         assert etl.game_id == 1
         os_mock.path.join.assert_called_once_with('/tmp/random', 'thingy')
         get_all_tables_dict_mock.assert_called_once_with({'gameid': 1})
@@ -74,7 +81,7 @@ class TestS3PostgresETL(unittest.TestCase):
     def test_load(self):
         csv2postgres_mock = mock.Mock()
 
-        etl = S3PostgresETL(filename='random_filename', storage_dir='here')
+        etl = S3PostgresETL(filename='1971-1972/filename', storage_dir='here')
         path = 'triple_triple_etl.load.postgres.s3_postgres_etl.csv2postgres'
         with mock.patch(path, csv2postgres_mock):
             etl.load(filepath='some.csv')
@@ -91,7 +98,7 @@ class TestS3PostgresETL(unittest.TestCase):
         os_mock = mock.Mock()
         os_mock.path.join.side_effect = filenames
 
-        etl = S3PostgresETL(filename='random_filename', storage_dir='here')
+        etl = S3PostgresETL(filename='1971-1972/filename', storage_dir='here')
         etl.extract_from_s3 = mock.Mock(return_value='/some/dir')
         etl.transform = mock.Mock()
         etl.load = mock.Mock()
