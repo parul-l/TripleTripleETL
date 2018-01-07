@@ -24,7 +24,7 @@ tables:
       - name: end_date
   teams:
     columns:
-      - name: game_id
+      - name: id
         constraints:
           - primary key
       - name: name
@@ -41,7 +41,8 @@ tables:
     columns:
       - name: game_id
         constraints:
-          - foreign key (references games (id))
+          - foreign key: 
+            - games (id)
       - name: event_id
       - name: time_stamp
         constraints:
