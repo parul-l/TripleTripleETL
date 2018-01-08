@@ -91,8 +91,8 @@ def get_df_play_by_play(play_data):
              .astype(dtype=dtype_values)
 
 
-def get_df_box_score(box_score_data):
-    headers_box_score = [
+def get_df_box_score(box_score_data, traditional_or_playertracking=0):
+    headers_common = [
         'game_id',
         'team_id',
         'team_abbreviation',
@@ -101,8 +101,11 @@ def get_df_box_score(box_score_data):
         'player_name',
         'start_position',
         'comment',
-        'minutes',
-        'field_goal_made_2',
+        'minutes'
+    ]
+
+    headers_box_score_traditional = [
+       'field_goal_made_2',
         'field_goal_attempts_2',
         'field_goal_percent_2',
         'field_goal_made_3',
@@ -122,9 +125,38 @@ def get_df_box_score(box_score_data):
         'points',
         'plus_minus'
     ]
+
+    headers_box_score_player_tracking = [
+        'avg_speed_mph',
+        'distance_mph',
+        'offensive_rebounds_chances',
+        'defensive_rebounds_chances',
+        'rebound_chances',
+        'touches',
+        'secondary_assists',
+        'free_throw_assists',
+        'passes',
+        'assists',
+        'contested_field_goals_made',
+        'contested_field_goals_attempted',
+        'contested_field_goals_percent',
+        'uncontested_field_goals_made',
+        'uncontested_field_goals_attempted',
+        'uncontested_field_goals_percent',
+        'field_goal_percent',
+        'field_goals_defended_at_rim_made',
+        'field_goals_defended_at_rim_attempted',
+        'field_goals_defended_at_rim_percent'
+    ]
+
+    if traditional_or_playertracking == 0:
+        headers = headers_common + headers_box_score_traditional
+    elif traditional_or_playertracking == 1:
+        headers = headers_common + headers_box_score_player_tracking
+
     df_box_score = pd.DataFrame(
         box_score_data['resultSets'][0]['rowSet'],
-        columns=headers_box_score
+        columns=headers
     )
     df_box_score.minutes = pd.to_datetime(
         df_box_score.minutes, format='%M:%S'
@@ -132,11 +164,16 @@ def get_df_box_score(box_score_data):
     df_box_score.minutes = df_box_score.minutes.map(
         lambda x: (x.minute) * 60 + x.second
     )
+
     return df_box_score
 
 
-def get_all_nbastats_tables(play_data, box_score_data):
+def get_all_nbastats_tables(
+        play_data,
+        box_score_traditional_data,
+        box_score_player_tracking_data):
     return {
         'play_by_play': get_df_play_by_play(play_data),
-        'box_score': get_df_box_score(box_score_data)
+        'box_score_traditional': get_df_box_score(box_score_traditional_data, 0),
+        'box_score_player_tracking': get_df_box_score(box_score_player_tracking_data, 1)
     }
