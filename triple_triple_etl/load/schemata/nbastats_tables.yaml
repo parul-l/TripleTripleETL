@@ -1,0 +1,56 @@
+---
+tables:
+  play_by_play:
+    columns:
+      - name: game_id
+      - name: event_id
+      - name: period
+      - name: wctimestring
+      - name: pctimestring
+      - name: home_description
+      - name: neutral_description
+      - name: visitor_description
+      - name: score_visitor
+      - name: score_home
+      - name: player1_type
+      - name: player1_id
+      - name: player1_name
+      - name: player1_team_id
+      - name: player2_type
+      - name: player2_id
+      - name: player2_name
+      - name: player2_team_id
+      - name: player3_type
+      - name: player3_id
+      - name: player3_name
+      - name: player3_team_id      
+  box_score:
+    columns:
+      - name: game_id
+      - name: team_id
+      - name: team_abbreviation
+      - name: team_city
+      - name: player_id
+      - name: player_name
+      - name: start_position
+      - name: comment
+      - name: minutes
+      - name: field_goal_made_2
+      - name: field_goal_attempts_2
+      - name: field_goal_percent_2
+      - name: field_goal_made_3
+      - name: field_goal_attempts_3
+      - name: field_goal_percent_3
+      - name: free_throw_made
+      - name: free_throw_attempts
+      - name: free_throw_percent
+      - name: offensive_rebound
+      - name: defensive_rebound
+      - name: total_rebounds
+      - name: assists
+      - name: steals
+      - name: blocks
+      - name: turnovers
+      - name: personal_fouls
+      - name: points
+      - name: plus_minus
