@@ -45,8 +45,6 @@ tables:
             - games (id)
       - name: event_id
       - name: time_stamp
-        constraints:
-          - primary key
       - name: period
       - name: period_clock
       - name: shot_clock
