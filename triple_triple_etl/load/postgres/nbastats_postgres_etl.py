@@ -7,7 +7,7 @@ from triple_triple_etl.core.nbastats_json2csv import (
     get_df_play_by_play
 )
 from triple_triple_etl.load.postgres.postgres_helper import (
-    csv2postgres,
+    csv2postgres_no_pkeys,
     save_all_tables
 )
 from triple_triple_etl.load.postgres.postgres_connection import get_cursor
@@ -137,7 +137,8 @@ class NBAStatsPostgresETL(object):
         )
 
     def load(self, filepath):
-        csv2postgres(filepath)
+        tablename = os.path.basename(filepath).replace('.csv', '')
+        csv2postgres_no_pkeys(filepath=filepath)
 
     def run(self):
         _ = self.extract_from_nbastats()
