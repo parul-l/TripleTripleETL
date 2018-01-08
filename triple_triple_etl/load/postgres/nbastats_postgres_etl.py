@@ -43,7 +43,7 @@ def create_nbastats_tables():
           player3_team_id INTEGER
         );
 
-        CREATE TABLE box_score (
+        CREATE TABLE box_score_traditional (
           game_id VARCHAR(20),
           team_id INTEGER,
           team_abbreviation VARCHAR(3),
@@ -73,6 +73,39 @@ def create_nbastats_tables():
           points INTEGER,
           plus_minus FLOAT            
         );
+
+        CREATE TABLE box_score_player_tracking (
+          game_id VARCHAR(20),
+          team_id INTEGER,
+          team_abbreviation VARCHAR(3),
+          team_city VARCHAR(20),
+          player_id INTEGER,
+          player_name VARCHAR(50),
+          start_position VARCHAR(5),
+          comment VARCHAR(100),
+          minutes INTEGER,
+          avg_speed_mph FLOAT,
+          distance_mph FLOAT,
+          offensive_rebounds_chances INTEGER,
+          defensive_rebounds_chances INTEGER,
+          rebound_chances INTEGER,
+          touches INTEGER,
+          secondary_assists INTEGER,
+          free_throw_assists FLOAT,
+          passes INTEGER,
+          assists INTEGER,
+          contested_field_goals_made INTEGER,
+          contested_field_goals_attempted INTEGER,
+          contested_field_goals_percent FLOAT,
+          uncontested_field_goals_made INTEGER,
+          uncontested_field_goals_attempted INTEGER,
+          uncontested_field_goals_percent FLOAT,
+          field_goal_percent FLOAT,
+          field_goals_defended_at_rim_made INTEGER,
+          field_goals_defended_at_rim_attempted INTEGER,
+          field_goals_defended_at_rim_percent FLOAT
+        );
+        
         END TRANSACTION;
     """
     with get_cursor() as cursor:
@@ -87,7 +120,10 @@ class NBAStatsPostgresETL(object):
         Args:
             base_url (str): The base url for the `requests` method
             params (dict): The paramters for the 'requests' method
-            data_content (bool): Refers to `play_by_play` (1) or `box_score` (0)
+            data_content (int):
+                0 - `play_by_play`
+                1 - `box_score_traditional`
+                2 - `box_score_player_tracking`
             storage_dir (str): The path for storing the transformed data
     """
     
@@ -114,40 +150,49 @@ class NBAStatsPostgresETL(object):
         return nba_data
 
     def transform_play_by_play(self):
-        if not self.data_content:
-            raise ValueError('self.data is for box_score')
+        if self.data_content != 0:
+            raise ValueError('self.data is not for play_by_play')
 
         return {'play_by_play': get_df_play_by_play(self.data)}
         
-    def transform_box_score(self):
-        if self.data_content:
-            raise ValueError('self.data is for play_by_play')
+    def transform_box_score_traditional(self):
+        if self.data_content != 1:
+            raise ValueError('self.data is not for box_score_traditional')
 
-        return {'box_score': get_df_box_score(self.data)}
+        return {'box_score_traditional': get_df_box_score(self.data, 0)}
+
+    def transform_box_score_player_tracking(self):
+        if self.data_content != 2:
+            raise ValueError('self.data is not for box_score_player_tracking')
+
+        return {'box_score_player_tracking': get_df_box_score(self.data, 1)}
 
     def transform(self):
-        if self.data_content:
+        if self.data_content == 0:
             tables_dict = self.transform_play_by_play()
-        else:
-            tables_dict = self.transform_box_score()
-        
+        elif self.data_content == 1:
+            tables_dict = self.transform_box_score_traditional()
+        elif self.data_content == 2:
+            tables_dict = self.transform_box_score_player_tracking()
         save_all_tables(
             tables_dict=tables_dict,
             storage_dir=self.storage_dir
         )
 
     def load(self, filepath):
-        tablename = os.path.basename(filepath).replace('.csv', '')
         csv2postgres_no_pkeys(filepath=filepath)
 
     def run(self):
         _ = self.extract_from_nbastats()
         self.transform()
         
-        if self.data_content:
+        if self.data_content == 0:
             filename = 'play_by_play.csv'
-        else:
-            filename = 'box_score.csv'
+        elif self.data_content == 1:
+            filename = 'box_score_traditional.csv'
+        elif self.data_content == 2:
+            filename = 'box_score_player_tracking.csv'
+        
         filepath = os.path.join(self.storage_dir, filename)
         
         self.load(filepath)

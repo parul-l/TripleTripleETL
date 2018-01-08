@@ -1,7 +1,8 @@
 from triple_triple_etl.load.postgres.nbastats_postgres_etl import NBAStatsPostgresETL
 from triple_triple_etl.constants import (
     BASE_URL_PLAY,
-    BASE_URL_BOX_SCORE_TRADITIONAL
+    BASE_URL_BOX_SCORE_TRADITIONAL,
+    BASE_URL_BOX_SCORE_PLAYER_TRACKING
 )
 
 if __name__ == '__main__':
@@ -22,17 +23,26 @@ if __name__ == '__main__':
     pbp_input = {
         'base_url': BASE_URL_PLAY,
         'params': params,
+        'data_content': 0
+    }
+
+    bs_traditional_input = {
+        'base_url': BASE_URL_BOX_SCORE_TRADITIONAL,
+        'params': params,
         'data_content': 1
     }
 
-    bs_input = {
-        'base_url': BASE_URL_BOX_SCORE_TRADITIONAL,
+    bs_player_tracking_input = {
+        'base_url': BASE_URL_BOX_SCORE_PLAYER_TRACKING,
         'params': params,
-        'data_content': 0
+        'data_content': 2
     }
 
     etl_pbp = NBAStatsPostgresETL(**pbp_input)
     etl_pbp.run()
 
-    etl_bs = NBAStatsPostgresETL(**bs_input)
-    etl_bs.run()
+    etl_bs_traditional = NBAStatsPostgresETL(**bs_traditional_input)
+    etl_bs_traditional.run()
+
+    etl_bs_player_tracking = NBAStatsPostgresETL(**bs_player_tracking_input)
+    etl_bs_player_tracking.run()
