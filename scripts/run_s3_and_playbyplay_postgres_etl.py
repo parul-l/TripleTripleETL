@@ -29,8 +29,11 @@ if __name__ == '__main__':
 
     all_files = get_game_files(bucket_name)
 
-    for filename in all_files[6:7]:
-        s3_etl = S3PostgresETL(filename=filename)
+    for filename in all_files[17:18]:
+        s3_etl = S3PostgresETL(
+            filename=filename,
+            schema_file='position_data_tables.yaml'
+        )
         playbyplay_etl = NBAStatsPostgresETL(**pbp_input)
         etl = S3andPlaybyPlayPostgresETL(
             s3_etl=s3_etl,
