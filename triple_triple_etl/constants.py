@@ -15,6 +15,7 @@ DATASETS_DIR = os.path.abspath(config['path']['datasets_dir'])
 
 BASE_URL_PLAY = 'http://stats.nba.com/stats/playbyplayv2'
 BASE_URL_BOX_SCORE_TRADITIONAL = 'http://stats.nba.com/stats/boxscoretraditionalv2'
+BASE_URL_BOX_SCORE_PLAYER_TRACKING = 'http://stats.nba.com/stats/boxscoreplayertrackv2'
 
 
 MAX_STORAGE_MB = 1000
