@@ -11,7 +11,8 @@ from triple_triple_etl.core.s3_json2csv import get_all_tables_dict
 from triple_triple_etl.core.s3 import s3download, extract2dir
 from triple_triple_etl.load.postgres.postgres_connection import get_cursor
 from triple_triple_etl.load.postgres.postgres_helper import  (
-    csv2postgres,
+    csv2postgres_pkeys,
+    csv2postgres_no_pkeys,
     save_all_tables
 )
 
@@ -65,7 +66,6 @@ def create_s3_rawdata_tables():
           x_coordinate FLOAT,
           y_coordinate FLOAT,
           z_coordinate FLOAT,
-          PRIMARY KEY (time_stamp),
           FOREIGN KEY (game_id) REFERENCES games (id)
         );
 
@@ -84,6 +84,7 @@ class S3PostgresETL(object):
     def __init__(
             self,
             filename,
+            schema_file,
             game_id=None,
             bucket_base='nba-player-positions',
             raw_data_dir=DATASETS_DIR,
@@ -91,6 +92,7 @@ class S3PostgresETL(object):
     ):
         self.filename = filename
         self.game_id = game_id
+        self.schema_file = schema_file
         self.bucket_base = bucket_base
         self.raw_data_dir = raw_data_dir
         self.storage_dir = storage_dir
@@ -128,14 +130,28 @@ class S3PostgresETL(object):
             shutil.rmtree(self.tmp_dir)
 
     def load(self, filepath):
-        csv2postgres(filepath)
+        tablename = os.path.basename(filepath).replace('.csv', '')
+        csv2posgres_params = {
+            'tablename': tablename,
+            'filepath': filepath,
+            'schema_file': self.schema_file
+        }
+        if tablename == 'game_positions':
+            csv2postgres_no_pkeys(filepath=filepath)
+        else:
+            csv2postgres_pkeys(**csv2posgres_params)
+
 
     def run(self):
         _ = self.extract_from_s3()
         self.transform()
 
-        all_csvs = ['games.csv', 'players.csv',
-                    'teams.csv', 'game_positions.csv']
+        all_csvs = [
+            'games.csv',
+            'players.csv',
+            'teams.csv',
+            'game_positions.csv'
+        ]
 
         for f in all_csvs:
             filepath = os.path.join(self.storage_dir, f)
