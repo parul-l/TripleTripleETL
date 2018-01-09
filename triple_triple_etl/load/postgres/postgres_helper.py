@@ -18,7 +18,7 @@ def get_primary_keys(tablename, schema_file='position_data_tables.yaml'):
     return map(lambda x: x['name'], filter(primary_key, columns))
 
 
-def csv2postgres_pkeys(tablename, filepath, schema_file):
+def csv2postgres_pkeys(tablename, filepath, schema_file='position_data_tables.yaml'):
     pkeys_params = {'tablename': tablename, 'schema_file': schema_file}
     pkeys = ','.join(get_primary_keys(**pkeys_params))
     
