@@ -17,9 +17,13 @@ class TestS3PostgresETL(unittest.TestCase):
     """Tests for s3_postgres_etl.py"""
 
     def test_extract_from_s3(self):
+        schema_file_mock=mock.Mock()
         tempfile_mock = mock.Mock(return_value='1971-1972/filename')
         bucket_mock = mock.Mock(return_value='nba-player-positions')
-        etl = S3PostgresETL(filename=tempfile_mock.return_value)
+        etl = S3PostgresETL(
+            filename=tempfile_mock.return_value,
+            schema_file=schema_file_mock
+        )
 
         s3download_mock = mock.Mock(return_value='some.txt')
         extract2dir_mock = mock.Mock()
@@ -54,7 +58,10 @@ class TestS3PostgresETL(unittest.TestCase):
         get_all_s3_tables_mock = mock.Mock(return_value='a_dict')
         save_all_tables_mock = mock.Mock()
 
-        etl = S3PostgresETL(filename='1971-1972/filename', storage_dir='here')
+        etl = S3PostgresETL(
+            filename='1971-1972/filename',
+            storage_dir='here',
+            schema_file='some_schema_file')
         etl.tmp_dir = '/tmp/random'
 
         patches = {
@@ -79,14 +86,35 @@ class TestS3PostgresETL(unittest.TestCase):
         shutil_mock.rmtree.assert_called_once_with('/tmp/random')
 
     def test_load(self):
-        csv2postgres_mock = mock.Mock()
+        csv2postgres_no_pkeys_mock = mock.Mock()
+        csv2postgres_pkeys_mock = mock.Mock()
+        
+        patches = {
+            'csv2postgres_no_pkeys': csv2postgres_no_pkeys_mock,
+            'csv2postgres_pkeys': csv2postgres_pkeys_mock
+        }
 
-        etl = S3PostgresETL(filename='1971-1972/filename', storage_dir='here')
-        path = 'triple_triple_etl.load.postgres.s3_postgres_etl.csv2postgres'
-        with mock.patch(path, csv2postgres_mock):
+        etl = S3PostgresETL(
+            filename='1971-1972/filename',
+            storage_dir='here',
+            schema_file='some_schema_file'
+        )
+
+        path = 'triple_triple_etl.load.postgres.s3_postgres_etl'
+    
+        with mock.patch.multiple(path, **patches):
             etl.load(filepath='some.csv')
-
-        csv2postgres_mock.assert_called_once_with('some.csv')    
+        csv2postgres_pkeys_mock.assert_called_once_with(
+            tablename='some',
+            filepath='some.csv',
+            schema_file='some_schema_file'
+        )    
+        
+        with mock.patch.multiple(path, **patches):
+            etl.load(filepath='game_positions.csv')
+        csv2postgres_no_pkeys_mock.assert_called_once_with(
+            filepath='game_positions.csv'
+        )
 
     def test_run(self):
         filenames = [
@@ -98,7 +126,11 @@ class TestS3PostgresETL(unittest.TestCase):
         os_mock = mock.Mock()
         os_mock.path.join.side_effect = filenames
 
-        etl = S3PostgresETL(filename='1971-1972/filename', storage_dir='here')
+        etl = S3PostgresETL(
+            filename='1971-1972/filename',
+            storage_dir='here',
+            schema_file='schema_file'
+        )
         etl.extract_from_s3 = mock.Mock(return_value='/some/dir')
         etl.transform = mock.Mock()
         etl.load = mock.Mock()
