@@ -139,7 +139,7 @@ def get_game_position_info(game_data_dict):
     return pd.DataFrame(player_position_data, columns=col_headers)
 
 
-def get_all_tables_dict(game_data_dict):
+def get_all_s3_tables(game_data_dict):
     return {
         'players': get_player_info(game_data_dict),
         'teams': get_team_info(game_data_dict),

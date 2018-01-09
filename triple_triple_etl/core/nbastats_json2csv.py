@@ -173,7 +173,10 @@ def get_all_nbastats_tables(
         box_score_traditional_data,
         box_score_player_tracking_data):
     return {
-        'play_by_play': get_df_play_by_play(play_data),
-        'box_score_traditional': get_df_box_score(box_score_traditional_data, 0),
-        'box_score_player_tracking': get_df_box_score(box_score_player_tracking_data, 1)
+        'play_by_play': 
+            get_df_play_by_play(play_data),
+        'box_score_traditional': 
+            get_df_box_score(box_score_traditional_data, 0),
+        'box_score_player_tracking':
+            get_df_box_score(box_score_player_tracking_data, 1)
     }

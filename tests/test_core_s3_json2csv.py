@@ -11,7 +11,7 @@ from triple_triple_etl.core.s3_json2csv import (
     get_team_info,
     get_game_info,
     get_game_position_info,
-    get_all_tables_dict
+    get_all_s3_tables
 )
 
 
@@ -178,8 +178,8 @@ class TestS3Json2Csv(unittest.TestCase):
             all(df.y_coordinate.values >= -5)
         )
 
-    def test_get_all_tables_dict(self):
-        all_tables = get_all_tables_dict(self.data)
+    def test_get_all_s3_tables(self):
+        all_tables = get_all_s3_tables(self.data)
 
         self.assertEqual(
             first=set(all_tables.keys()),

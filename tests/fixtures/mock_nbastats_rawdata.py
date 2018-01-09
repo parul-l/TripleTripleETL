@@ -106,7 +106,7 @@ playdata_rowSet = [
     ]
 ]
 
-bsdata_rowSet = [
+bs_traditional_data_rowSet = [
     [
         u'0021500568',
         1610612748,
@@ -170,16 +170,89 @@ bsdata_rowSet = [
 ]
 
 
+bs_player_tracking_data_rowSet = [
+    [
+        u'0021500568',
+        1610612748,
+        u'MIA',
+        u'Miami',
+        2736,
+        u'Luol Deng',
+        u'F',
+        u'',
+        u'32:44',
+        4.41,
+        2.4,
+        5,
+        10,
+        15,
+        64,
+        0,
+        0,
+        47,
+        2,
+        2,
+        5,
+        0.4,
+        4,
+        7,
+        0.57,
+        0.5,
+        2,
+        3,
+        0.667
+    ],
+    [
+        u'0021500568',
+        1610612748,
+        u'MIA',
+        u'Miami',
+        1626159,
+        u'Justise Winslow',
+        u'F',
+        u'',
+        u'25:33',
+        4.53,
+        1.93,
+        1,
+        3,
+        4,
+        38,
+        0,
+        0,
+        30,
+        1,
+        0,
+        1,
+        0.0,
+        3,
+        7,
+        0.428,
+        0.375,
+        5,
+        7,
+        0.713
+    ]
+]
+
+
 playdata_resultSets0 = {
     'rowSet': playdata_rowSet
 }
-bsdata_resultSets0 = {
-    'rowSet': bsdata_rowSet
+bsdata_traditional_resultSets0 = {
+    'rowSet': bs_traditional_data_rowSet
+}
+
+bsdata_player_tracking_resultSets0 = {
+    'rowSet': bs_player_tracking_data_rowSet
 }
 
 mock_play_data = {
     'resultSets': [playdata_resultSets0]
 }
-mock_bs_data = {
-    'resultSets': [bsdata_resultSets0]
+mock_bs_traditional_data = {
+    'resultSets': [bsdata_traditional_resultSets0]
+}
+mock_bs_player_tracking_data = {
+    'resultSets': [bsdata_player_tracking_resultSets0]
 }

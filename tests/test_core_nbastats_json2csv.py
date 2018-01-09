@@ -1,12 +1,12 @@
-import os
+import unittest
 import mock
 
 import pandas.api.types as ptypes
-import unittest
 
 from tests.fixtures.mock_nbastats_rawdata import (
     mock_play_data,
-    mock_bs_data
+    mock_bs_traditional_data,
+    mock_bs_player_tracking_data,
 )
 from triple_triple_etl.core.nbastats_json2csv import (
     time_in_seconds,
@@ -110,8 +110,10 @@ class TestNBAStatsJson2Csv(unittest.TestCase):
         )
         self.assertTrue(ptypes.is_datetime64_any_dtype(df['wctimestring']))
 
-    def test_get_df_box_score(self, data=mock_bs_data):
-        df = get_df_box_score(data)
+    def test_get_df_box_score_traditional(
+            self,
+            data=mock_bs_traditional_data):
+        df = get_df_box_score(data, traditional_or_playertracking=0)
 
         # all columns exist and named correctly
         self.assertEqual(
@@ -167,5 +169,94 @@ class TestNBAStatsJson2Csv(unittest.TestCase):
                 for col in col_num)
         )
 
+    def test_get_df_box_score_player_tracking(
+            self,
+            data=mock_bs_player_tracking_data):
+        df = get_df_box_score(data, traditional_or_playertracking=1)
+
+        # all columns exist and named correctly
+        self.assertEqual(
+            first=set(df.columns),
+            second={
+                'game_id',
+                'team_id',
+                'team_abbreviation',
+                'team_city',
+                'player_id',
+                'player_name',
+                'start_position',
+                'comment',
+                'minutes',
+                'avg_speed_mph',
+                'distance_mph',
+                'offensive_rebounds_chances',
+                'defensive_rebounds_chances',
+                'rebound_chances',
+                'touches',
+                'secondary_assists',
+                'free_throw_assists',
+                'passes',
+                'assists',
+                'contested_field_goals_made',
+                'contested_field_goals_attempted',
+                'contested_field_goals_percent',
+                'uncontested_field_goals_made',
+                'uncontested_field_goals_attempted',
+                'uncontested_field_goals_percent',
+                'field_goal_percent',
+                'field_goals_defended_at_rim_made',
+                'field_goals_defended_at_rim_attempted',
+                'field_goals_defended_at_rim_percent'
+            }
+        )
+        # column types are accurate
+        col_object = [
+            'game_id',
+            'team_abbreviation',
+            'team_city',
+            'player_name',
+            'start_position',
+            'comment'
+        ]
+        col_num = [col for col in list(df) if col not in col_object]
+
+        self.assertTrue(
+            all(ptypes.is_string_dtype(df[col])
+                for col in col_object)
+        )
+        self.assertTrue(
+            all(ptypes.is_numeric_dtype(df[col])
+                for col in col_num)
+        )        
+
+
+    def test_get_all_nbastats_tables(self):
+        play_data_mock = mock.Mock()
+        box_score_traditional_data_mock = mock.Mock()
+        box_score_player_tracking_data_mock = mock.Mock()
+
+        get_df_play_by_play_mock = mock.Mock()
+        get_df_box_score_mock = mock.Mock()
+
+        path = 'triple_triple_etl.core.nbastats_json2csv'
+        patches = {
+            'get_df_play_by_play': get_df_play_by_play_mock,
+            'get_df_box_score': get_df_box_score_mock
+        }
+
+        with mock.patch.multiple(path, **patches):
+            get_all_nbastats_tables(
+                play_data=play_data_mock,
+                box_score_traditional_data=box_score_traditional_data_mock,
+                box_score_player_tracking_data=box_score_player_tracking_data_mock
+            )
+        get_df_play_by_play_mock.assert_called_once_with(play_data_mock)
+        get_df_box_score_mock.assert_has_calls(
+            [
+                mock.call(box_score_traditional_data_mock, 0),
+                mock.call(box_score_player_tracking_data_mock, 1)
+            ],
+            any_order=True
+        )
 if __name__ == '__main__':
     unittest.main()
