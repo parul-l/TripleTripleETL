@@ -51,7 +51,7 @@ class TestS3PostgresETL(unittest.TestCase):
 
         shutil_mock = mock.Mock()
 
-        get_all_tables_dict_mock = mock.Mock(return_value='a_dict')
+        get_all_s3_tables_mock = mock.Mock(return_value='a_dict')
         save_all_tables_mock = mock.Mock()
 
         etl = S3PostgresETL(filename='1971-1972/filename', storage_dir='here')
@@ -60,7 +60,7 @@ class TestS3PostgresETL(unittest.TestCase):
         patches = {
             'os': os_mock,
             'json': json_mock,
-            'get_all_tables_dict': get_all_tables_dict_mock,
+            'get_all_s3_tables': get_all_s3_tables_mock,
             'save_all_tables': save_all_tables_mock,
             'shutil': shutil_mock,
             'open': create_mock_context_manager([filepath_mock])
@@ -71,7 +71,7 @@ class TestS3PostgresETL(unittest.TestCase):
 
         assert etl.game_id == 1
         os_mock.path.join.assert_called_once_with('/tmp/random', 'thingy')
-        get_all_tables_dict_mock.assert_called_once_with({'gameid': 1})
+        get_all_s3_tables_mock.assert_called_once_with({'gameid': 1})
         save_all_tables_mock.assert_called_once_with(
             'a_dict',
             storage_dir='here'

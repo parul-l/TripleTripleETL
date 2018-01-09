@@ -7,7 +7,7 @@ from triple_triple_etl.constants import (
     DATASETS_DIR,
     DATATABLES_DIR
 )
-from triple_triple_etl.core.s3_json2csv import get_all_tables_dict
+from triple_triple_etl.core.s3_json2csv import get_all_s3_tables
 from triple_triple_etl.core.s3 import s3download, extract2dir
 from triple_triple_etl.load.postgres.postgres_connection import get_cursor
 from triple_triple_etl.load.postgres.postgres_helper import  (
@@ -124,7 +124,7 @@ class S3PostgresETL(object):
             self.game_id = game_data_dict['gameid']
 
             # get game dataframes
-            all_tables_dict = get_all_tables_dict(game_data_dict)
+            all_tables_dict = get_all_s3_tables(game_data_dict)
             save_all_tables(all_tables_dict, storage_dir=self.storage_dir)
 
             shutil.rmtree(self.tmp_dir)
