@@ -43,7 +43,29 @@ CREATE TABLE game_positions (
   x_coordinate FLOAT,
   y_coordinate FLOAT,
   z_coordinate FLOAT,
-  PRIMARY KEY (time_stamp),
+  PRIMARY KEY (game_id, event_id, time_stamp, player_id),
   FOREIGN KEY (game_id) REFERENCES games (id),
+);
+
+CREATE TABLE game_possession (
+  game_id VARCHAR(20),
+  event_id INTEGER,
+  time_stamp TIMESTAMP,
+  player_id INTEGER,
+  minimum_distance_sq FLOAT,
+  closest_to_ball BOOLEAN,
+  PRIMARY KEY (game_id, event_id, time_stamp, player_id),
+  FOREIGN KEY (
+      game_id
+    , event_id
+    , time_stamp
+    , player_id
+    )
+    REFERENCES game_positions (
+        game_id
+      , event_id
+      , time_stamp
+      , player_id
+    )
 );
   
