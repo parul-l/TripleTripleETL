@@ -58,3 +58,19 @@ tables:
       - name: x_coordinate
       - name: y_coordinate
       - name: z_coordinate
+  game_possession:
+    columns:
+      - name: game_id
+        constraints:
+        - primary key
+      - name: event_id
+        constraints:
+        - primary key
+      - name: time_stamp
+        constraints:
+        - primary key
+      - name: player_id
+        constraints:
+        - primary key
+      - name: distance_to_ball_sq
+      - name: closest_to_ball
