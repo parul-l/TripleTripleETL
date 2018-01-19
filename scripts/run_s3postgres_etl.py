@@ -7,6 +7,6 @@ if __name__ == '__main__':
 
     all_files = get_game_files(bucket_name)
 
-    for filename in all_files[17:18]:
+    for filename in all_files[7:8]:
         etl = S3PostgresETL(filename=filename, schema_file='position_data_tables.yaml')
         etl.run()

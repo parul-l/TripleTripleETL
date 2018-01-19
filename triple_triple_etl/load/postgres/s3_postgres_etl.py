@@ -66,6 +66,7 @@ def create_s3_rawdata_tables():
           , x_coordinate FLOAT
           , y_coordinate FLOAT
           , z_coordinate FLOAT
+          , PRIMARY KEY (game_id, event_id, time_stamp, player_id)
           , FOREIGN KEY (game_id) REFERENCES games (id)
         );
 
@@ -136,11 +137,11 @@ class S3PostgresETL(object):
             'filepath': filepath,
             'schema_file': self.schema_file
         }
-        if tablename == 'game_positions':
-            csv2postgres_no_pkeys(filepath=filepath)
-        else:
-            csv2postgres_pkeys(**csv2posgres_params)
-
+        # if tablename == 'game_positions':
+        #     csv2postgres_no_pkeys(filepath=filepath)
+        # else:
+        #     csv2postgres_pkeys(**csv2posgres_params)
+        csv2postgres_pkeys(**csv2posgres_params)
 
     def run(self):
         _ = self.extract_from_s3()

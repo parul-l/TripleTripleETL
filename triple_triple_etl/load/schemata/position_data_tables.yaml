@@ -41,15 +41,20 @@ tables:
     columns:
       - name: game_id
         constraints:
-          - foreign key: 
-            - games (id)
+          - primary key
       - name: event_id
+        constraints:
+          - primary key
       - name: time_stamp
+        constraints:
+          - primary key
       - name: period
       - name: period_clock
       - name: shot_clock
       - name: team_id
       - name: player_id
+        constraints:
+          - primary key
       - name: x_coordinate
       - name: y_coordinate
       - name: z_coordinate
