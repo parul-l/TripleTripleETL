@@ -3,7 +3,17 @@ tables:
   play_by_play:
     columns:
       - name: game_id
+        constraints:
+          - primary key      
       - name: event_id
+        constraints:
+          - primary key      
+      - name: event_msg_type
+        constraints:
+          - primary key      
+      - name: event_msg_action_type
+        constraints:
+          - primary key      
       - name: period
       - name: wctimestring
       - name: pctimestring
@@ -24,13 +34,17 @@ tables:
       - name: player3_id
       - name: player3_name
       - name: player3_team_id      
-  box_score:
+  box_score_traditional:
     columns:
       - name: game_id
+        constraints:
+          - primary key           
       - name: team_id
       - name: team_abbreviation
       - name: team_city
       - name: player_id
+        constraints:
+          - primary key           
       - name: player_name
       - name: start_position
       - name: comment
@@ -54,3 +68,38 @@ tables:
       - name: personal_fouls
       - name: points
       - name: plus_minus
+  box_score_player_tracking:
+    columns:
+      - name: game_id
+        constraints:
+          - primary key                                         
+      - name: team_id                              
+      - name: team_abbreviation                    
+      - name: team_city                            
+      - name: player_id
+        constraints:
+          - primary key                                       
+      - name: player_name                          
+      - name: start_position                       
+      - name: comment                              
+      - name: minutes                              
+      - name: avg_speed_mph                        
+      - name: distance_mph                         
+      - name: offensive_rebounds_chances           
+      - name: defensive_rebounds_chances           
+      - name: rebound_chances                      
+      - name: touches                              
+      - name: secondary_assists                    
+      - name: free_throw_assists                   
+      - name: passes                               
+      - name: assists                              
+      - name: contested_field_goals_made           
+      - name: contested_field_goals_attempted      
+      - name: contested_field_goals_percent        
+      - name: uncontested_field_goals_made         
+      - name: uncontested_field_goals_attempted    
+      - name: uncontested_field_goals_percent      
+      - name: field_goal_percent                   
+      - name: field_goals_defended_at_rim_made     
+      - name: field_goals_defended_at_rim_attempted
+      - name: field_goals_defended_at_rim_percent      
