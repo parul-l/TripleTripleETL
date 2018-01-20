@@ -51,6 +51,8 @@ class TestNBAStatsJson2Csv(unittest.TestCase):
             second={
                 "game_id",
                 "event_id",
+                "event_msg_type",
+                "event_msg_action_type",
                 "period",
                 "wctimestring",
                 "pctimestring",
@@ -85,6 +87,8 @@ class TestNBAStatsJson2Csv(unittest.TestCase):
         ]
         col_num = [
             'event_id',
+            "event_msg_type",
+            "event_msg_action_type",
             'period',
             'pctimestring',
             'score_visitor',

@@ -17,7 +17,8 @@ class TestNBAStatsPostgresETL(unittest.TestCase):
         etl = NBAStatsPostgresETL(
             base_url='some_base',
             params='some_params',
-            data_content='0/1/2'
+            data_content='0/1/2', 
+            schema_file='some_schema_file'
         )
 
         path = 'triple_triple_etl.load.postgres.nbastats_postgres_etl.get_data'
@@ -40,7 +41,8 @@ class TestNBAStatsPostgresETL(unittest.TestCase):
             etl = NBAStatsPostgresETL(
                 base_url='some_base',
                 params='some_params',
-                data_content=data_content
+                data_content=data_content,
+                schema_file='some_schema_file'
             )
             etl.data = {'some': 'data'}
 
@@ -63,7 +65,8 @@ class TestNBAStatsPostgresETL(unittest.TestCase):
             etl = NBAStatsPostgresETL(
                 base_url='some_base',
                 params='some_params',
-                data_content=data_content
+                data_content=data_content,
+                schema_file='some_schema_file'
             )
             etl.data = {'some': 'data'}
 
@@ -87,7 +90,8 @@ class TestNBAStatsPostgresETL(unittest.TestCase):
             etl = NBAStatsPostgresETL(
                 base_url='some_base',
                 params='some_params',
-                data_content=data_content
+                data_content=data_content,
+                schema_file='some_schema_file'
             )
             etl.data = {'some': 'data'}
 
@@ -112,7 +116,8 @@ class TestNBAStatsPostgresETL(unittest.TestCase):
             etl = NBAStatsPostgresETL(
                 base_url='some_base',
                 params='some_params',
-                data_content=data_content
+                data_content=data_content,
+                schema_file='some_schema_file'
             )
             etl.transform_play_by_play = mock.Mock(
                 return_value=tables_dict_mock
@@ -145,20 +150,25 @@ class TestNBAStatsPostgresETL(unittest.TestCase):
               
 
     def test_load(self):
-        csv2postgres_no_pkeys_mock = mock.Mock()
+        csv2postgres_pkeys_mock = mock.Mock()
         etl = NBAStatsPostgresETL(
             base_url='some_base',
             params='some_params',
-            data_content='0/1/2'
+            data_content='0/1/2',
+            schema_file='some_schema_file'
         )
         path = (
                 'triple_triple_etl.load.postgres.nbastats_postgres_etl'
-                '.csv2postgres_no_pkeys'
+                '.csv2postgres_pkeys'
         )
-        with mock.patch(path, csv2postgres_no_pkeys_mock):
+        with mock.patch(path, csv2postgres_pkeys_mock):
             etl.load(filepath='some.csv')
 
-        csv2postgres_no_pkeys_mock.assert_called_once_with(filepath='some.csv')
+        csv2postgres_pkeys_mock.assert_called_once_with(
+            tablename='some',
+            filepath='some.csv',
+            schema_file='some_schema_file'
+        )
 
     def test_run(self): 
         filenames = [
@@ -173,7 +183,8 @@ class TestNBAStatsPostgresETL(unittest.TestCase):
             etl = NBAStatsPostgresETL(
                 base_url='some_base',
                 params='some_params',
-                data_content=data_content
+                data_content=data_content,
+                schema_file='some_schema_file'
             )
             etl.storage_dir = 'here'
             etl.extract_from_nbastats = mock.Mock(return_value='/some/dir')
