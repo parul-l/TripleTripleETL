@@ -7,7 +7,7 @@ from triple_triple_etl.core.nbastats_json2csv import (
     get_df_play_by_play
 )
 from triple_triple_etl.load.postgres.postgres_helper import (
-    csv2postgres_no_pkeys,
+    csv2postgres_pkeys,
     save_all_tables
 )
 from triple_triple_etl.load.postgres.postgres_connection import get_cursor
@@ -21,6 +21,8 @@ def create_nbastats_tables():
         CREATE TABLE play_by_play (
           game_id VARCHAR(20),
           event_id INTEGER,
+          event_msg_type INTEGER,
+          event_msg_action_type INTEGER,
           period INTEGER,
           wctimestring TIMESTAMP,
           pctimestring FLOAT,
@@ -40,7 +42,13 @@ def create_nbastats_tables():
           player3_type INTEGER,
           player3_id INTEGER,
           player3_name VARCHAR(50),
-          player3_team_id INTEGER
+          player3_team_id INTEGER,
+          PRIMARY KEY (
+              game_id
+              , event_id
+              , event_msg_type
+              , event_msg_action_type
+          )
         );
 
         CREATE TABLE box_score_traditional (
@@ -71,7 +79,8 @@ def create_nbastats_tables():
           turnovers INTEGER,
           personal_fouls INTEGER,
           points INTEGER,
-          plus_minus FLOAT            
+          plus_minus FLOAT,
+          PRIMARY KEY (game_id, player_id)         
         );
 
         CREATE TABLE box_score_player_tracking (
@@ -103,7 +112,8 @@ def create_nbastats_tables():
           field_goal_percent FLOAT,
           field_goals_defended_at_rim_made INTEGER,
           field_goals_defended_at_rim_attempted INTEGER,
-          field_goals_defended_at_rim_percent FLOAT
+          field_goals_defended_at_rim_percent FLOAT,
+          PRIMARY KEY (game_id, player_id)
         );
         
         END TRANSACTION;
@@ -132,11 +142,13 @@ class NBAStatsPostgresETL(object):
         base_url,
         params,
         data_content,
+        schema_file,
         storage_dir=DATATABLES_DIR
     ):
         self.base_url = base_url
         self.params = params
-        self.data_content=data_content
+        self.data_content = data_content
+        self.schema_file = schema_file
         self.storage_dir = storage_dir
         self.data = None
 
@@ -180,7 +192,13 @@ class NBAStatsPostgresETL(object):
         )
 
     def load(self, filepath):
-        csv2postgres_no_pkeys(filepath=filepath)
+        tablename = os.path.basename(filepath).replace('.csv', '')
+        csv2posgres_params = {
+            'tablename': tablename,
+            'filepath': filepath,
+            'schema_file': self.schema_file
+        }
+        csv2postgres_pkeys(**csv2posgres_params)
 
     def run(self):
         _ = self.extract_from_nbastats()
