@@ -23,19 +23,22 @@ if __name__ == '__main__':
     pbp_input = {
         'base_url': BASE_URL_PLAY,
         'params': params,
-        'data_content': 0
+        'data_content': 0,
+        'schema_file': 'nbastats_tables.yaml'
     }
 
     bs_traditional_input = {
         'base_url': BASE_URL_BOX_SCORE_TRADITIONAL,
         'params': params,
-        'data_content': 1
+        'data_content': 1,
+        'schema_file': 'nbastats_tables.yaml'
     }
 
     bs_player_tracking_input = {
         'base_url': BASE_URL_BOX_SCORE_PLAYER_TRACKING,
         'params': params,
-        'data_content': 2
+        'data_content': 2,
+        'schema_file': 'nbastats_tables.yaml'
     }
 
     etl_pbp = NBAStatsPostgresETL(**pbp_input)
