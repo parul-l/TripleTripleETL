@@ -12,7 +12,6 @@ from triple_triple_etl.core.s3 import s3download, extract2dir
 from triple_triple_etl.load.postgres.postgres_connection import get_cursor
 from triple_triple_etl.load.postgres.postgres_helper import  (
     csv2postgres_pkeys,
-    csv2postgres_no_pkeys,
     save_all_tables
 )
 
@@ -137,10 +136,7 @@ class S3PostgresETL(object):
             'filepath': filepath,
             'schema_file': self.schema_file
         }
-        # if tablename == 'game_positions':
-        #     csv2postgres_no_pkeys(filepath=filepath)
-        # else:
-        #     csv2postgres_pkeys(**csv2posgres_params)
+
         csv2postgres_pkeys(**csv2posgres_params)
 
     def run(self):
