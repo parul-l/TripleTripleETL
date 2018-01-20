@@ -17,6 +17,8 @@ def get_df_play_by_play(play_data):
     headers_play_by_play = [
         "game_id",
         "event_id",
+        "event_msg_type",
+        "event_msg_action_type",
         "period",
         "wctimestring",
         "pctimestring",
@@ -45,6 +47,8 @@ def get_df_play_by_play(play_data):
         play_by_play.append([
             each_play[0],
             each_play[1],
+            each_play[2],
+            each_play[3],
             each_play[4],
             datetime.strptime(each_play[5], '%I:%M %p'),
             time_in_seconds(each_play[6]),
