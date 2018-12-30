@@ -1,5 +1,5 @@
 from triple_triple_etl.load.postgres.postgres_connection import get_cursor
-
+import os
 
 def create_game_possession_table():
     query = """
