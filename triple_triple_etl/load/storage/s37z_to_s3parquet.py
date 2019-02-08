@@ -36,7 +36,6 @@ class S3FileFormatETL(object):
         self.gameid = None
         self.data_paths = None
 
-    
     def extract_from_s3(self):
         filepath = s3download(
             bucket_name=self.bucket_base,
@@ -87,7 +86,6 @@ class S3FileFormatETL(object):
                 logger.error(err)
                 raise
 
-
     def load(self):
         # Uploading files to s3  
         for name, path in self.data_paths.items():
@@ -112,3 +110,26 @@ class S3FileFormatETL(object):
         self.transform(data)
         self.load()
         self.cleanup()
+
+
+def transform_upload_all_games(
+        bucket_name: str,
+        all_files: list,
+        idx: list = []
+):
+    if not idx:
+        all_files = np.array(all_files)[idx]
+
+    for i, filename in enumerate(all_files):
+        logger.info('transforming/loading file {} of {}'.format(i, len(all_files)))
+        try:
+            etl = S3FileFormatETL(
+                filename=filename,
+                bucket_base=bucket_name,
+                season_year='2015-2016'
+            )
+            etl.run()
+        except Exception as err:
+            logger.error('Error with file {}, {}'.format(i, filename))
+            raise
+

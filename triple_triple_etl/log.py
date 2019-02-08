@@ -1,16 +1,21 @@
 import logging
 import typing
 
+from triple_triple_etl.constants import LOGS_DIR
+
 
 LOG_FORMAT = '%(asctime)s.%(msecs)03d %(name)-12s %(levelname)-8s %(message)s'
 
-def get_logger(log_name: str = '', 
+def get_logger(output_file: str,
+               log_name: str = '', 
                level: typing.Union[str, int] = 'INFO',
                log_format: str = LOG_FORMAT,
                date_format: str = '%Y-%m-%d %H:%M:%S'):
     """Fetches a logger so you don't have to.
     Parameters
     ----------
+    output_file: str
+        The name of the file to catch error logs
     log_name : str (optional, defaults: '')
         The name of the logger.
     level : int or str {'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'} (optional)
@@ -37,11 +42,16 @@ def get_logger(log_name: str = '',
 
         formatter = logging.Formatter(log_format, datefmt=date_format)
         ch = logging.StreamHandler()
-        ch.setFormatter(formatter)
-        logger.addHandler(ch)
+        fh = logging.FileHandler(os.path.join(LOGS_DIR, output_file))
+        
+        for h in [ch, fh]:
+            h.setFormatter(formatter)
+            logger.addHandler(h)
 
     for sh in logger.handlers:
         if isinstance(sh, logging.StreamHandler):
             sh.setLevel(level)
+        elif isinstance(sh, logging.FileHandler):
+            sh.setLevel('ERROR')
 
     return logger

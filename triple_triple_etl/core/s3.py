@@ -1,22 +1,35 @@
 import os
+import re
 import tempfile
 
 import boto3
 import patoolib
 
-from triple_triple_etl.constants import DATASETS_DIR
+from triple_triple_etl.constants import DATASETS_DIR, META_DIR
 from triple_triple_etl.log import get_logger
 
 logger = get_logger()
 s3 = boto3.resource('s3')
+REGEX = re.compile("(.+/rawdata/)(\d.+\d.)([a-zA-Z])")
 
 
 def get_game_files(bucket_name):
     bucket = s3.Bucket(bucket_name)
     
     logger.info('Getting list of .7z files')
-    return [obj.key for obj in bucket.objects.all()
-            if 'Raw' not in obj.key and '.7z' in obj.key]
+    all_files = [
+        obj.key for obj in bucket.objects.all()
+        if 'Raw' not in obj.key and '.7z' in obj.key
+    ]
+    df_all_files = pd.DataFrame(data=all_files, columns=['filename'])
+    # add additional columns
+    df_all_files['season'] = df_all_files.filename.apply(
+        lambda x: x.split('/')[0]
+    )
+    df_all_files['gamedate'] = df_all_files.filename.apply(
+        lambda x: datetime.datetime.strptime(REGEX.match(x).group(2), '%m.%d.%Y.')
+    )
+    
 
 
 def rename_game_files(bucket_name):
@@ -54,8 +67,13 @@ def s3download(bucket_name, filename):
 
 
 def extract2dir(filepath, directory=DATASETS_DIR):
-    logger.info('Unzip file as .json')
-    patoolib.extract_archive(filepath, outdir=directory)
-    # remove .7z file
-    logger.info('Remove .7z file')
-    os.remove(filepath)
+    try:
+        logger.info('Unzip file as .json')
+        patoolib.extract_archive(filepath, outdir=directory)
+        # remove .7z file
+        logger.info('Remove .7z file')
+        os.remove(filepath)
+    except FileNotFoundError as err:
+        logger.error(err)
+        raise
+    

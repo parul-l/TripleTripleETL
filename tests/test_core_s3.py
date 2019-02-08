@@ -42,6 +42,12 @@ class TestS3(unittest.TestCase):
         if os.path.exists(path):
             os.remove(path)
 
+    def test_extract2dir(self):
+        # create a file path
+        path = os.path.join(os.path.dirname(__file__), 'extract_dir')
+        with self.assertRaises(Exception):
+            extract2dir(__file__, path)
+
 
 if __name__ == '__main__':
     unittest.main()

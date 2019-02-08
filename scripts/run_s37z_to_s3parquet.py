@@ -8,10 +8,14 @@ if __name__ == '__main__':
     bucket_name = 'nba-player-positions'
     all_files = get_game_files(bucket_name)
 
-    for filename in all_files[2:3]:
+    start_time = datetime.datetime.now()
+    for filename in all_files[1:100]:
         etl = S3FileFormatETL(
             filename=filename,
             bucket_base=bucket_name,
             season_year='2015-2016'
         )
         etl.run()
+    
+    end_time = datetime.datetime.now()
+    
