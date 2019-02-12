@@ -5,13 +5,14 @@ import tempfile
 import boto3
 import patoolib
 
-from triple_triple_etl.constants import DATASETS_DIR, META_DIR
+from triple_triple_etl.constants import DATASETS_DIR, META_DIR, LOGS_DIR
 from triple_triple_etl.log import get_logger
 
-logger = get_logger()
+logger = get_logger(output_file=os.path.join(LOGS_DIR, __file__))
 s3 = boto3.resource('s3')
 REGEX = re.compile("(.+/rawdata/)(\d.+\d.)([a-zA-Z])")
 
+#sqnfll7s35v4xtxbdstw1xy40000gn/T/tmpt0wg8j25
 
 def get_game_files(bucket_name):
     bucket = s3.Bucket(bucket_name)
@@ -29,6 +30,9 @@ def get_game_files(bucket_name):
     df_all_files['gamedate'] = df_all_files.filename.apply(
         lambda x: datetime.datetime.strptime(REGEX.match(x).group(2), '%m.%d.%Y.')
     )
+
+    # save the data
+    df_all_files.to_parquet(os.path.join(META_DIR, 'rawpositiondata'))
     
 
 

@@ -1,4 +1,5 @@
 import logging
+import os
 import typing
 
 from triple_triple_etl.constants import LOGS_DIR
@@ -6,7 +7,7 @@ from triple_triple_etl.constants import LOGS_DIR
 
 LOG_FORMAT = '%(asctime)s.%(msecs)03d %(name)-12s %(levelname)-8s %(message)s'
 
-def get_logger(output_file: str,
+def get_logger(output_file: str = 'general_errors.log',
                log_name: str = '', 
                level: typing.Union[str, int] = 'INFO',
                log_format: str = LOG_FORMAT,
@@ -39,7 +40,6 @@ def get_logger(output_file: str,
     # If there are no other handlers, create one and set level.
     # Note that logger.handlers is a list of handlers
     if len(logger.handlers) == 0:
-
         formatter = logging.Formatter(log_format, datefmt=date_format)
         ch = logging.StreamHandler()
         fh = logging.FileHandler(os.path.join(LOGS_DIR, output_file))
