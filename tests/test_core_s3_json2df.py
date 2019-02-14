@@ -4,7 +4,6 @@ import unittest
 import pandas.api.types as ptypes
 
 from tests.fixtures.mock_s3rawdata import data
-from triple_triple_etl.constants import DATATABLES_DIR
 from triple_triple_etl.core.s3_json2df import (
     get_player_info,
     get_team_info,

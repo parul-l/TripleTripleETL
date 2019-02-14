@@ -22,3 +22,9 @@ BASE_URL_BOX_SCORE_PLAYER_TRACKING = 'http://stats.nba.com/stats/boxscoreplayert
 
 MAX_STORAGE_MB = 1000
 SCHEMA_DIR = os.path.join(MODULE_HOME, 'load', 'schemata')
+
+# s3 source info
+SOURCE_BUCKET = config['s3']['source_bucket']
+
+# s3 destination info
+DESTINATION_BUCKET = config['s3']['destination_bucket']
