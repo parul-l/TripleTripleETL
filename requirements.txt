@@ -44,7 +44,7 @@ Pygments==2.2.0
 python-dateutil==2.7.5
 python-jose==2.0.2
 pytz==2018.9
-PyYAML==3.13
+PyYAML==4.2b1
 requests==2.21.0
 responses==0.10.5
 s3transfer==0.2.0
