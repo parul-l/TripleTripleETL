@@ -29,6 +29,34 @@ log_filename = '{}.log'.format(os.path.splitext(os.path.basename(__file__))[0])
 logger = get_logger(output_file=log_filename)
 
 
+def get_uploaded_metadata(filepath: str):
+    if os.path.isfile(filepath):
+        return pd.read_parquet(filepath)
+    else:
+        columns = [
+            'input_filename',
+            'gameinfo_uploadedFLG',
+            'gameposition_uploadedFLG',
+            'playersinfo_uploadedFLG',
+            'teamsinfo_uploadedFLG',
+            'lastuploadDTS'
+        ]
+        return pd.DataFrame(columns=columns)
+
+
+def get_file_idx_in_uploaded(
+        df_uploaded: pd.DataFrame,
+        input_filename: str
+):
+    # get index if file exists or create a row with that filename
+    try:
+        return df_uploaded\
+            .query('input_filename == @input_filename')\
+            .index[0]
+    except:
+        return df_uploaded.shape[0]
+  
+
 class S3FileFormatETL(object):
     def __init__(
         self,
@@ -51,30 +79,14 @@ class S3FileFormatETL(object):
 
     def metadata(self):
         logger.info('Getting loaded files metadata')
-
-        if os.path.isfile(self.uploaded_filepath):
-            self.df_uploaded = pd.read_parquet(self.uploaded_filepath)
-        else:
-            columns = [
-                'input_filename',
-                'gameinfo_uploadedFLG',
-                'gameposition_uploadedFLG',
-                'playersinfo_uploadedFLG',
-                'teamsinfo_uploadedFLG',
-                'lastuploadDTS'
-            ]
-            self.df_uploaded = pd.DataFrame(columns=columns)
-        
-        # get index if file exists or create a row with that filename
-        try:
-            self.file_idx = self.df_uploaded\
-                .query('input_filename == @self.input_filename')\
-                .index[0]
-        except:
-            self.file_idx = self.df_uploaded.shape[0]
-            self.df_uploaded\
-                .loc[self.file_idx] = [self.input_filename] + [np.nan] * 5       
-        
+        self.df_uploaded = get_uploaded_metadata(self.uploaded_filepath)
+        self.file_idx = get_file_idx_in_uploaded(
+            df_uploaded=self.df_uploaded,
+            input_filename=self.input_filename
+        )
+        # add row to df_uploaded if file DNE (ie file_idx == len(df_uploaded))
+        if self.file_idx == self.df_uploaded.shape[0]:
+            self.df_uploaded.loc[self.file_idx] = [self.input_filename] + [np.nan] * 5
 
     def extract_from_s3(self):
         filepath = s3download(
@@ -88,7 +100,7 @@ class S3FileFormatETL(object):
         self.tmp_dir = tempfile.mkdtemp()
 
         logger.info('Extracting file')
-        extract2dir(filepath, directory=self.tmp_dir)
+        extract2dir(filepath=filepath, directory=self.tmp_dir)
 
         # open file
         try:
@@ -97,8 +109,6 @@ class S3FileFormatETL(object):
             with open(os.path.join(self.tmp_dir, filename)) as f:
                 data = json.load(f)
                 self.gameid = data['gameid']
-            
-
         # except FileNotFoundError as err:
         except Exception as err:
             logger.error(err)

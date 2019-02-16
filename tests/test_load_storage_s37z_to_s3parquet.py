@@ -1,28 +1,84 @@
 import copy
-import mock
+import io
+import moto
+import os
 import unittest
+import unittest.mock as mock
 
 from tests.fixtures.mock_s37z_to_s3parquet_data import mock_df_uploaded
+from tests.fixtures.mock_s3rawdata import data
 from triple_triple_etl.load.storage.s37z_to_s3parquet import (
+    get_uploaded_metadata,
+    get_file_idx_in_uploaded,
     S3FileFormatETL,
     transform_upload_all_games
 )
+from triple_triple_etl.constants import META_DIR
+
+
+class TestUploadedMetaData(unittest.TestCase):
+    """Tests for get_uploaded_metadata() from s37z_to_s3parquet.py """
+    def test_filepath_exists(self):
+        filepath = os.path.join(META_DIR, 'tranformed_s3uploaded.parquet.snappy')
+        df = get_uploaded_metadata(filepath)
+
+        self.assertEqual(
+            first=set(df.columns),
+            second={
+                'input_filename',
+                'gameinfo_uploadedFLG',
+                'gameposition_uploadedFLG',
+                'playersinfo_uploadedFLG',
+                'teamsinfo_uploadedFLG',
+                'lastuploadDTS'
+            }
+        )
+    
+    def test_filepath_dne(self):
+        file_mock = 'somefile'
+
+        df = get_uploaded_metadata(file_mock)
+        # check columns are as expected
+        self.assertEqual(
+            first=set(df.columns),
+            second={
+                'input_filename',
+                'gameinfo_uploadedFLG',
+                'gameposition_uploadedFLG',
+                'playersinfo_uploadedFLG',
+                'teamsinfo_uploadedFLG',
+                'lastuploadDTS'
+            }
+        )
+        # check total row count
+        self.assertEqual(first=df.shape[0], second=0)    
+
+
+class TestFileIdx(unittest.TestCase):
+    def test_file_exists(self):
+        idx = get_file_idx_in_uploaded(
+            df_uploaded=mock_df_uploaded,
+            input_filename='somefile.7z'
+        )
+        assert idx == 1
+
+    def test_file_dne(self):
+        idx = get_file_idx_in_uploaded(
+            df_uploaded=mock_df_uploaded,
+            input_filename='someotherfile.7z'
+        )
+        assert idx == mock_df_uploaded.shape[0]
+
 
 class TestS3FileFormatETL(unittest.TestCase):
     """Tests for s37z_to_s3parquet.py"""
-
     
-    def test_metadata_file_exist(self):    
+    def test_metadata(self):    
         inputfile_mock = mock.Mock(return_value='somefile.7z')
         source_bucket_mock = mock.Mock(return_value='nba-player-positions')
         destination_bucket_mock = mock.Mock(return_value='nba-game-info')
         season_year = '2015-2016'
 
-        read_parquet_mock = mock.Mock()
-        read_parquet_mock.read_parquet.return_value = mock_df_uploaded
-        patches = {'pd': read_parquet_mock}
-        path = 'triple_triple_etl.load.storage.s37z_to_s3parquet'
-        
         
         etl = S3FileFormatETL(
             input_filename=inputfile_mock,
@@ -30,33 +86,169 @@ class TestS3FileFormatETL(unittest.TestCase):
             destination_bucket=destination_bucket_mock,
             season_year=season_year
         )
+        get_uploaded_metadata_mock = mock.Mock(return_value=mock_df_uploaded)
+        get_file_idx_uploaded_mock = mock.Mock()
+        
+        patches = {
+            'get_uploaded_metadata': get_uploaded_metadata_mock,
+            'get_file_idx_in_uploaded': get_file_idx_uploaded_mock
+        }
+        path = 'triple_triple_etl.load.storage.s37z_to_s3parquet'
         with mock.patch.multiple(path, **patches):   
-        # call metadata function
             etl.metadata()
-        self.assertEqual(etl.df_uploaded.shape[0], 3, msg='{}'.format(etl.df_uploaded))
+        
+        get_uploaded_metadata_mock.assert_called_once_with(etl.uploaded_filepath)
+        get_file_idx_uploaded_mock.assert_called_once_with(
+            df_uploaded=mock_df_uploaded,
+            input_filename=inputfile_mock
+        )
+    
+    def test_extract_from_s3(self):
+        # etl input mocks
+        inputfile_mock = mock.Mock(return_value='somefile.7z')
+        source_bucket_mock = mock.Mock(return_value='nba-player-positions')
+        destination_bucket_mock = mock.Mock(return_value='nba-game-info')
+        season_year = '2015-2016'
 
-        # test columns are as expected
-        # self.assertEqual(
-        #     first=set(etl.df_uploaded.columns),
-        #     second={
-        #         'input_filename',
-        #         'gameinfo_uploadedFLG',
-        #         'gameposition_uploadedFLG',
-        #         'playersinfo_uploadedFLG',
-        #         'teamsinfo_uploadedFLG',
-        #         'lastuploadDTS'
-        #     }
-        # )
-        # test if input file does not exist
-        # assert etl.file_idx == etl.df_uploaded.shape[0]
+        # function mocks
+        s3download_mock = mock.Mock(return_value='some.txt')
+        extract2dir_mock = mock.Mock()
+        tempfile_mock = mock.Mock()
+        tempfile_mock.mkdtemp.return_value = 'tmp/somedir'
+
+        # set up mock data
+        open_mock = mock.mock_open()
+        os_mock = mock.Mock()
+        os_mock.listdir.return_value = ['mock_s3rawdata.py']
+        os_mock.path.join = os.path.join
+        json_mock = mock.Mock()
+        json_mock.load.return_value = data
+
+        # instantiate etl
+        etl = S3FileFormatETL(
+            input_filename=inputfile_mock,
+            source_bucket=source_bucket_mock,
+            destination_bucket=destination_bucket_mock,
+            season_year=season_year
+        )
+        # test given open mock
+        patches = {
+            'extract2dir': extract2dir_mock,
+            's3download': s3download_mock,
+            'tempfile': tempfile_mock,
+            'open': open_mock,
+            'os': os_mock,
+            'json': json_mock
+        }
+        path = 'triple_triple_etl.load.storage.s37z_to_s3parquet'
+
+        with mock.patch.multiple(path, **patches):
+            extract_output = etl.extract_from_s3()
         
-        # # test if input file does exist
+        # assert statements
+        s3download_mock.assert_called_once_with(
+            bucket_name=source_bucket_mock,
+            filename=inputfile_mock
+        )
+        extract2dir_mock.assert_called_once_with(
+            filepath=s3download_mock.return_value,
+            directory=tempfile_mock.mkdtemp.return_value
+        )
+
+        self.assertEqual(
+            first=etl.gameid,
+            second=data['gameid'],
+            msg='{}, {}'.format(etl.gameid, data['gameid'])
+        )
+        self.assertEqual(
+            first=set(extract_output.keys()),
+            second=set(data.keys())
+        )
+
+        # test by removing 'open_mock'
+        patches.pop('open')
+        with mock.patch.multiple(path, **patches):
+            extract_output = etl.extract_from_s3()
+        self.assertEqual(
+            first=extract_output,
+            second={}
+        )
+
+
+    def test_transform(self):
+        # etl input mocks
+        inputfile_mock = mock.Mock(return_value='somefile.7z')
+        source_bucket_mock = mock.Mock(return_value='nba-player-positions')
+        destination_bucket_mock = mock.Mock(return_value='nba-game-info')
+        season_year = '2015-2016'
+
+        # function mocks
+        get_game_info_mock = mock.Mock()
+        get_game_position_info_mock = mock.Mock()
+        get_player_info_mock = mock.Mock()
+        get_team_info_mock = mock.Mock()       
         
-        # self.assertEqual(
-        #     first=etl.file_idx,
-        #     second=1,
-        #     msg='{}'.format(etl.df_uploaded)
-        # )
+        # set up mocks
+        tempfile_mock = mock.Mock()
+        tempfile_mock.mkdtemp.return_value = 'tmp/somedir'
+
+        # instantiate etl and update etl.tmp_dir
+        etl = S3FileFormatETL(
+            input_filename=inputfile_mock,
+            source_bucket=source_bucket_mock,
+            destination_bucket=destination_bucket_mock,
+            season_year=season_year
+        )
+        etl.tmp_dir = tempfile_mock.mkdtemp.return_value
+        etl.gameid = data['gameid']
+
+        # collect functions to patch
+        patches = {
+            'get_game_info': get_game_info_mock,
+            'get_game_position_info': get_game_position_info_mock,
+            'get_player_info': get_player_info_mock,
+            'get_team_info': get_team_info_mock 
+        }
+        path = 'triple_triple_etl.load.storage.s37z_to_s3parquet'
+        with mock.patch.multiple(path, **patches):
+            etl.transform(data=data)
+        self.assertEqual(
+            first=set(etl.data_paths.keys()),
+            second={'gameinfo', 'gameposition', 'playersinfo', 'teamsinfo'}
+        )
+        tmp_dir = tempfile_mock.mkdtemp.return_value
+        self.assertEqual(
+            first=set(etl.data_paths.values()),
+            second={
+                '{}/gameinfo_{}.parquet.snappy'.format(tmp_dir, data['gameid']),
+                '{}/gameposition_{}.parquet.snappy'.format(tmp_dir, data['gameid']),
+                '{}/playersinfo_{}.parquet.snappy'.format(tmp_dir, data['gameid']),
+                '{}/teamsinfo_{}.parquet.snappy'.format(tmp_dir, data['gameid'])
+            }
+        )
+
+        # check functions are called
+        for function in patches.values():
+            function.assert_called_once_with(data)
+
+    @moto.mock_s3
+    def test_load(self):
+        # etl input mocks
+        inputfile_mock = mock.Mock(return_value='somefile.7z')
+        source_bucket_mock = mock.Mock(return_value='nba-player-positions')
+        destination_bucket_mock = mock.Mock(return_value='nba-game-info')
+        season_year = '2015-2016'
+
+        # instantiate etl and update gameid
+        etl = S3FileFormatETL(
+            input_filename=inputfile_mock,
+            source_bucket=source_bucket_mock,
+            destination_bucket=destination_bucket_mock,
+            season_year=season_year
+        )
+        
+        etl.gameid = data['gameid']
+        s3 = boto3.resource('s3')
 
 
 if __name__ == '__main__':
