@@ -1,7 +1,9 @@
 import copy
 import io
+import boto3
 import moto
 import os
+import tempfile
 import unittest
 import unittest.mock as mock
 
@@ -233,23 +235,89 @@ class TestS3FileFormatETL(unittest.TestCase):
 
     @moto.mock_s3
     def test_load(self):
-        # etl input mocks
-        inputfile_mock = mock.Mock(return_value='somefile.7z')
-        source_bucket_mock = mock.Mock(return_value='nba-player-positions')
-        destination_bucket_mock = mock.Mock(return_value='nba-game-info')
+        # etl input
+        destination_bucket = 'nba-game-info-test'
         season_year = '2015-2016'
+        gameid = '1234'
 
-        # instantiate etl and update gameid
-        etl = S3FileFormatETL(
-            input_filename=inputfile_mock,
-            source_bucket=source_bucket_mock,
-            destination_bucket=destination_bucket_mock,
-            season_year=season_year
-        )
-        
-        etl.gameid = data['gameid']
         s3 = boto3.resource('s3')
+        bucket = s3.Bucket(destination_bucket)
+        bucket.create()
 
+        with tempfile.NamedTemporaryFile() as tmp_file:
+            filename = tmp_file.name
+            etl = S3FileFormatETL(
+                input_filename=filename,
+                source_bucket='nba-player-positions-test',
+                destination_bucket=destination_bucket,
+                season_year=season_year
+            )        
+            # update some attributes
+            etl.gameid = gameid
+            etl.df_uploaded = copy.deepcopy(mock_df_uploaded)
+            etl.file_idx = 1
+            etl.data_paths = {'gameinfo_test': filename}
+            
+            etl.load()
+
+        key = '{}/season={}/gameid={}/{}.parquet'.format(
+            'gameinfo_test',
+            season_year,
+            gameid,
+            os.path.basename(filename)
+        )
+        objects = list(bucket.objects.filter(Prefix=key))
+        assert len(objects) == 1
+
+
+    def test_cleanup(self):
+        etl = S3FileFormatETL(
+            input_filename='somefile.7z',
+            source_bucket='nba-player-positions-test',
+            destination_bucket='nba-game-info-test',
+            season_year='2015-2016'
+        )
+        # update some attributes
+        etl.tmp_dir = '/tmp/somedir'
+        etl.df_uploaded = copy.deepcopy(mock_df_uploaded)
+        etl.file_idx = 1
+
+        path = 'triple_triple_etl.load.storage.s37z_to_s3parquet.shutil'
+        with mock.patch(path, mock.Mock()) as s:
+            etl.cleanup()
+            s.rmtree.assert_called_once_with(etl.tmp_dir)
+
+
+    def test_run(self):
+        etl = S3FileFormatETL(
+            input_filename='somefile.7z',
+            source_bucket='nba-player-positions-test',
+            destination_bucket='nba-game-info-test',
+            season_year='2015-2016'
+        )
+
+        # mock functions
+        metadata_mock = mock.Mock()
+        extract_mock = mock.Mock(return_value={'some': 'data'})
+        transform_mock = mock.Mock()
+        load_mock = mock.Mock()
+        cleanup_mock = mock.Mock()
+
+        # etl.metadata = mock.Mock()
+        etl.metadata = metadata_mock
+        etl.extract_from_s3 = extract_mock
+        etl.transform = transform_mock
+        etl.load = load_mock
+        etl.cleanup = cleanup_mock
+
+        # run the etl and check functions are called
+        etl.run()
+        # check functions are called
+        metadata_mock.assert_called_once_with()
+        extract_mock.assert_called_once_with()
+        transform_mock.assert_called_once_with(extract_mock.return_value)
+        load_mock.assert_called_once_with()
+        cleanup_mock.assert_called_once_with()
 
 if __name__ == '__main__':
     unittest.main()
