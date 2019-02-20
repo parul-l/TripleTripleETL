@@ -319,5 +319,35 @@ class TestS3FileFormatETL(unittest.TestCase):
         load_mock.assert_called_once_with()
         cleanup_mock.assert_called_once_with()
 
+
+class TestTransformUploadAll(unittest.TestCase):
+    """test transform_upload_all_games.py """
+
+    def test_tranform_upload_all_games(self):
+        # input parameters
+        season_year = '2015-2016'
+        all_files = ['file1.7z', 'file2.7z', 'file3.7z']
+        idx = [1, 2]
+        source_bucket = 'nba-position-data-test'
+        destination_bucket = 'nba-info-test'
+
+        # function mocks
+        etl_mock = mock.Mock()
+        S3FileFormatETL_mock = mock.Mock(return_value=etl_mock)
+        etl_mock.run = mock.Mock()
+        
+        path = 'triple_triple_etl.load.storage.s37z_to_s3parquet.S3FileFormatETL'
+        with mock.patch(path, S3FileFormatETL_mock):
+            transform_upload_all_games(
+                season_year=season_year,
+                all_files=all_files,
+                idx=idx,
+                source_bucket=source_bucket,
+                destination_bucket=destination_bucket
+            )
+        assert S3FileFormatETL_mock.call_count == len(idx)
+        assert etl_mock.run.call_count == len(idx)
+
+
 if __name__ == '__main__':
     unittest.main()
