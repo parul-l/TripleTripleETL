@@ -14,6 +14,7 @@ from triple_triple_etl.core.s3_json2df import (
     get_game_info,
     get_game_position_info
 )
+from triple_triple_etl.load.storage.load_helper import get_uploaded_metadata
 from triple_triple_etl.core.s3 import s3download, extract2dir
 from triple_triple_etl.log import get_logger
 from triple_triple_etl.constants import (
@@ -24,24 +25,24 @@ from triple_triple_etl.constants import (
 
 
 s3 = boto3.client('s3')
-# filename without the extension
-log_filename = '{}.log'.format(os.path.splitext(os.path.basename(__file__))[0])
-logger = get_logger(output_file=log_filename)
+# current filename without the extension
+LOG_FILENAME = '{}.log'.format(os.path.splitext(os.path.basename(__file__))[0])
+logger = get_logger(output_file=LOG_FILENAME)
 
 
-def get_uploaded_metadata(filepath: str):
-    if os.path.isfile(filepath):
-        return pd.read_parquet(filepath)
-    else:
-        columns = [
-            'input_filename',
-            'gameinfo_uploadedFLG',
-            'gameposition_uploadedFLG',
-            'playersinfo_uploadedFLG',
-            'teamsinfo_uploadedFLG',
-            'lastuploadDTS'
-        ]
-        return pd.DataFrame(columns=columns)
+# def get_uploaded_metadata(filepath: str):
+#     if os.path.isfile(filepath):
+#         return pd.read_parquet(filepath)
+#     else:
+#         columns = [
+#             'input_filename',
+#             'gameinfo_uploadedFLG',
+#             'gameposition_uploadedFLG',
+#             'playersinfo_uploadedFLG',
+#             'teamsinfo_uploadedFLG',
+#             'lastuploadDTS'
+#         ]
+#         return pd.DataFrame(columns=columns)
 
 
 def get_file_idx_in_uploaded(
@@ -74,12 +75,26 @@ class S3FileFormatETL(object):
         self.data_paths = None
         self.df_uploaded = None
         self.file_idx = None
-        self.uploaded_filepath = os.path.join(META_DIR, 'tranformed_s3uploaded.parquet.snappy')
+        
+        meta_data_filename = 'rawpositiontransformed_s3uploaded.parquet.snappy'
+        self.uploaded_filepath = os.path.join(META_DIR, meta_data_filename)
 
 
     def metadata(self):
         logger.info('Getting loaded files metadata')
-        self.df_uploaded = get_uploaded_metadata(self.uploaded_filepath)
+        # meta data df columns
+        columns = [
+            'input_filename',
+            'gameinfo_uploadedFLG',
+            'gameposition_uploadedFLG',
+            'playersinfo_uploadedFLG',
+            'teamsinfo_uploadedFLG',
+            'lastuploadDTS'
+        ]
+        self.df_uploaded = get_uploaded_metadata(
+            self.uploaded_filepath,
+            columns=columns
+        )
         self.file_idx = get_file_idx_in_uploaded(
             df_uploaded=self.df_uploaded,
             input_filename=self.input_filename
