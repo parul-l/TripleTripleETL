@@ -1,20 +1,24 @@
+import boto3
 import datetime
 import os
 import pandas as pd
+import re
 import tempfile
 import shutil
 
 from triple_triple_etl.constants import (
     BASE_URL_GAMELOG,
-    DESTINATION_BUCKET
+    DESTINATION_BUCKET,
+    META_DIR
 )
 from triple_triple_etl.core.nbastats_get_data import get_data
 from triple_triple_etl.log import get_logger
 from triple_triple_etl.load.storage.load_helper import get_uploaded_metadata
 
-THIS_FILENAME = os.path.splitext(os.path.basename(__file__))
-LOG_FILENAME = '{}.log'.format(os.path.splitext(THIS_FILENAME)[0])
+s3 = boto3.client('s3')
 
+THIS_FILENAME = os.path.splitext(os.path.basename(__file__))[0]
+LOG_FILENAME = '{}.log'.format(os.path.splitext(THIS_FILENAME)[0])
 logger = get_logger(output_file=LOG_FILENAME)
 
 
@@ -23,7 +27,7 @@ def get_first_date_season(
         datefrom: str = '10/01/2015',
         dateto: str = '10/31/2016',
 ):
-    logger.info('Get gamelogs from {} to {}'.format(datefom, dateto))
+    logger.info('Get gamelogs from {} to {}'.format(datefrom, dateto))
     params = {
         'DateFrom': datefrom,
         'DateTo': dateto,
@@ -38,15 +42,16 @@ def get_first_date_season(
 
     # index of GAME_DATE (note: direction is ASC)
     game_date_idx = data['resultSets'][0]['headers'].index('GAME_DATE')
+    date = data['resultSets'][0]['rowSet'][0][game_date_idx].split('-')
 
-    return data['resultSets'][0]['rowSet'][0][game_date_idx]
+    return '{}/{}/{}'.format(date[1], date[2], date[0])
 
 
 def add_metadata(
         df: pd.DataFrame,
         data_dict: dict
 ):
-    for col, val in col_val.items():
+    for col, val in data_dict.items():
         df[col] = val
     return df
 
@@ -54,10 +59,10 @@ def add_metadata(
 def tmp_save_gamelog(df: pd.DataFrame):
     tmp_dir = tempfile.mkdtemp()
     filename = 'gamelog{}.parquet.snappy'.format(df.GAME_ID.loc[0])
-    filepath = os.path.join(tempfile.mkdtemp(), filename)
+    filepath = os.path.join(tmp_dir, filename)
     df.to_parquet(fname=filepath, compression='snappy')
 
-    return tmp_dir
+    return filepath
 
 
 def get_game_info(df: pd.DataFrame):
@@ -65,21 +70,21 @@ def get_game_info(df: pd.DataFrame):
 
     return {
         'gameid': df.GAME_ID.loc[0],
-        'matchup': df.MATCHUP.loc[0].replace(' ', '').replace('.', ''),
+        'matchup': re.sub(r'\W+', 'at', df.MATCHUP.loc[0]),
         'gamedate': '{}{}{}'.format(gamedate_[1], gamedate_[2], gamedate_[0])
     }
 
 
 def append_upload_metadata(
-    df: pd.DataFrame,
-    data: list,
-    columns: list,
-    uploadFLG: boolean
+        df: pd.DataFrame,
+        data: list,
+        columns: list,
+        uploadFLG: bool
 ):
-    new_data = data.extend([uploadFLG])
-    df.append(data, columns=columns, ignore_index=True)
-
-    return df
+    data.extend([uploadFLG])
+    df_new = pd.DataFrame([data], columns=columns)
+    
+    return df.append(df_new, ignore_index=True)
 
 
 class NBAStatsGameLogsS3ETL(object):
@@ -91,28 +96,29 @@ class NBAStatsGameLogsS3ETL(object):
         destination_bucket: str = DESTINATION_BUCKET
     ):
 
-    self.datefrom = datefrom
-    self.dateto = dateto
-    self.season_year: str = season_year
-    self.tmp_dirs = []
+        self.datefrom = datefrom
+        self.dateto = dateto
+        self.season_year = season_year
+        self.destination_bucket = destination_bucket
+        self.tmp_dirs = []
 
-    # api info
-    self.base_url = BASE_URL_GAMELOG
-    self.params = {
-        'DateFrom': self.datefrom,
-        'DateTo': self.dateto,
-        'Direction': 'ASC',
-        'LeagueID': '00',
-        'PlayerOrTeam': 'T',
-        'Season': self.season,
-        'SeasonType': 'Regular Season',
-        'Sorter': 'DATE'
-    }
+        # api info
+        self.base_url = BASE_URL_GAMELOG
+        self.params = {
+            'DateFrom': self.datefrom,
+            'DateTo': self.dateto,
+            'Direction': 'ASC',
+            'LeagueID': '00',
+            'PlayerOrTeam': 'T',
+            'Season': self.season_year,
+            'SeasonType': 'Regular Season',
+            'Sorter': 'DATE'
+        }
 
-    # meta data file
-    meta_data_filename = os.path.join(META_DIR, THIS_FILENAME)
-    self.uploaded_filepath = '{}.parquet.snappy'.format(meta_data_filename)
-    
+        # meta data file
+        meta_data_filename = os.path.join(META_DIR, THIS_FILENAME)
+        self.uploaded_filepath = '{}.parquet.snappy'.format(meta_data_filename)
+        
     def metadata(self):
         logger.info('Getting loaded files metadata')
         # meta data columns
@@ -126,14 +132,14 @@ class NBAStatsGameLogsS3ETL(object):
         )
 
     def extract_by_date_from_nbastats(self):
-        logger.info('Get gamelogs from {} to {}'.format(self.datefom, self.dateto))
+        logger.info('Get gamelogs from {} to {}'.format(self.datefrom, self.dateto))
         return get_data(base_url=self.base_url, params=self.params)
         
     def load(self, data):
         loaddate = datetime.datetime.utcnow().strftime('%F %TZ')
         metadata_info = {
             'BASE_URL': self.base_url,
-            'PARAMS': self.params,
+            'PARAMS': str(self.params),
             'UPDATE_DTS': loaddate
         }
         for games in data['resultSets']:
@@ -146,13 +152,14 @@ class NBAStatsGameLogsS3ETL(object):
                     data_dict=metadata_info
                 )
                 # save to tmp dir and collect tmpdir path
-                self.tmp_dirs.append(tmp_save_gamelog(df))
+                filepath = tmp_save_gamelog(df)
+                self.tmp_dirs.append(os.path.dirname(filepath))
 
                 # get info for metadata
                 gameinfo = get_game_info(df)
                 updatemetadata = [
                     self.base_url,
-                    self.params,
+                    str(self.params),
                     self.season_year,
                     gameinfo['gamedate'],
                     gameinfo['gameid'],
