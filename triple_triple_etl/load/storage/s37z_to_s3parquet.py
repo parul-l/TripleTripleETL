@@ -197,7 +197,7 @@ class S3FileFormatETL(object):
         today = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.df_uploaded.loc[self.file_idx, 'lastuploadDTS'] = today
         # save df_uploaded
-        self.df_uploaded.to_parquet(fname=self.uploaded_filepath, compression='snappy')    
+        self.df_uploaded.to_parquet(fname=self.uploaded_filepath, compression='snappy')
 
     def run(self):
         self.metadata()
