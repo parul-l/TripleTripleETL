@@ -5,8 +5,8 @@ columns = [
     'input_filename',
     'gameinfo_uploadedFLG',
     'gameposition_uploadedFLG',
-    'playersinfo_uploadedFLG',
-    'teamsinfo_uploadedFLG',
+    'playerinfo_uploadedFLG',
+    'teaminfo_uploadedFLG',
     'lastuploadDTS'
 ]
 data = [

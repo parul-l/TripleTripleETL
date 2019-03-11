@@ -10,50 +10,11 @@ import unittest.mock as mock
 from tests.fixtures.mock_s37z_to_s3parquet_data import mock_df_uploaded
 from tests.fixtures.mock_s3rawdata import data
 from triple_triple_etl.load.storage.s37z_to_s3parquet import (
-    get_uploaded_metadata,
     get_file_idx_in_uploaded,
     S3FileFormatETL,
     transform_upload_all_games
 )
 from triple_triple_etl.constants import META_DIR
-
-
-class TestUploadedMetaData(unittest.TestCase):
-    """Tests for get_uploaded_metadata() from s37z_to_s3parquet.py """
-    def test_filepath_exists(self):
-        filepath = os.path.join(META_DIR, 'tranformed_s3uploaded.parquet.snappy')
-        df = get_uploaded_metadata(filepath)
-
-        self.assertEqual(
-            first=set(df.columns),
-            second={
-                'input_filename',
-                'gameinfo_uploadedFLG',
-                'gameposition_uploadedFLG',
-                'playersinfo_uploadedFLG',
-                'teamsinfo_uploadedFLG',
-                'lastuploadDTS'
-            }
-        )
-    
-    def test_filepath_dne(self):
-        file_mock = 'somefile'
-
-        df = get_uploaded_metadata(file_mock)
-        # check columns are as expected
-        self.assertEqual(
-            first=set(df.columns),
-            second={
-                'input_filename',
-                'gameinfo_uploadedFLG',
-                'gameposition_uploadedFLG',
-                'playersinfo_uploadedFLG',
-                'teamsinfo_uploadedFLG',
-                'lastuploadDTS'
-            }
-        )
-        # check total row count
-        self.assertEqual(first=df.shape[0], second=0)    
 
 
 class TestFileIdx(unittest.TestCase):
@@ -99,12 +60,29 @@ class TestS3FileFormatETL(unittest.TestCase):
         with mock.patch.multiple(path, **patches):   
             etl.metadata()
         
-        get_uploaded_metadata_mock.assert_called_once_with(etl.uploaded_filepath)
+        get_uploaded_metadata_mock.assert_called_once_with(
+            etl.uploaded_filepath,
+            columns=list(mock_df_uploaded.columns)
+        )
         get_file_idx_uploaded_mock.assert_called_once_with(
             df_uploaded=mock_df_uploaded,
             input_filename=inputfile_mock
         )
-    
+
+    def test_meta_file_exists(self):
+        idx = get_file_idx_in_uploaded(
+            df_uploaded=mock_df_uploaded,
+            input_filename='somefile.7z'
+        )
+        assert idx == 1
+
+    def test_meta_file_dne(self):
+        idx = get_file_idx_in_uploaded(
+            df_uploaded=mock_df_uploaded,
+            input_filename='someotherfile.7z'
+        )
+        assert idx == mock_df_uploaded.shape[0]
+
     def test_extract_from_s3(self):
         # etl input mocks
         inputfile_mock = mock.Mock(return_value='somefile.7z')
@@ -188,8 +166,14 @@ class TestS3FileFormatETL(unittest.TestCase):
         get_game_info_mock = mock.Mock()
         get_game_position_info_mock = mock.Mock()
         get_player_info_mock = mock.Mock()
-        get_team_info_mock = mock.Mock()       
+        get_team_info_mock = mock.Mock()
         
+        # built in mocks
+        pq_mock = mock.Mock()
+        pq_mock.write_to_dataset = mock.Mock()
+        os_mock = mock.Mock()
+        os_mock.listdir = mock.Mock(return_value=['somefilename.parquet'])
+
         # set up mocks
         tempfile_mock = mock.Mock()
         tempfile_mock.mkdtemp.return_value = 'tmp/somedir'
@@ -209,28 +193,26 @@ class TestS3FileFormatETL(unittest.TestCase):
             'get_game_info': get_game_info_mock,
             'get_game_position_info': get_game_position_info_mock,
             'get_player_info': get_player_info_mock,
-            'get_team_info': get_team_info_mock 
+            'get_team_info': get_team_info_mock,
+            'pq': pq_mock,
+            'os': os_mock 
         }
         path = 'triple_triple_etl.load.storage.s37z_to_s3parquet'
         with mock.patch.multiple(path, **patches):
             etl.transform(data=data)
         self.assertEqual(
             first=set(etl.data_paths.keys()),
-            second={'gameinfo', 'gameposition', 'playersinfo', 'teamsinfo'}
-        )
-        tmp_dir = tempfile_mock.mkdtemp.return_value
-        self.assertEqual(
-            first=set(etl.data_paths.values()),
-            second={
-                '{}/gameinfo_{}.parquet.snappy'.format(tmp_dir, data['gameid']),
-                '{}/gameposition_{}.parquet.snappy'.format(tmp_dir, data['gameid']),
-                '{}/playersinfo_{}.parquet.snappy'.format(tmp_dir, data['gameid']),
-                '{}/teamsinfo_{}.parquet.snappy'.format(tmp_dir, data['gameid'])
-            }
+            second={'gameinfo', 'gameposition', 'playerinfo', 'teaminfo'}
         )
 
         # check functions are called
-        for function in patches.values():
+        mock_functions = [
+            get_game_info_mock,
+            get_game_position_info_mock,
+            get_player_info_mock,
+            get_team_info_mock
+        ]
+        for function in mock_functions:
             function.assert_called_once_with(data)
 
     @moto.mock_s3
@@ -269,7 +251,6 @@ class TestS3FileFormatETL(unittest.TestCase):
         objects = list(bucket.objects.filter(Prefix=key))
         assert len(objects) == 1
 
-
     def test_cleanup(self):
         etl = S3FileFormatETL(
             input_filename='somefile.7z',
@@ -286,7 +267,6 @@ class TestS3FileFormatETL(unittest.TestCase):
         with mock.patch(path, mock.Mock()) as s:
             etl.cleanup()
             s.rmtree.assert_called_once_with(etl.tmp_dir)
-
 
     def test_run(self):
         etl = S3FileFormatETL(
@@ -347,6 +327,7 @@ class TestTransformUploadAll(unittest.TestCase):
             )
         assert S3FileFormatETL_mock.call_count == len(idx)
         assert etl_mock.run.call_count == len(idx)
+
 
 
 if __name__ == '__main__':
