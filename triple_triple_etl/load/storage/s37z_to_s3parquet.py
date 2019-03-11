@@ -5,6 +5,7 @@ import logging
 import numpy as np
 import os
 import pandas as pd
+import pyarrow.parquet as pq
 import tempfile
 import shutil
 
@@ -28,21 +29,6 @@ s3 = boto3.client('s3')
 # current filename without the extension
 LOG_FILENAME = '{}.log'.format(os.path.splitext(os.path.basename(__file__))[0])
 logger = get_logger(output_file=LOG_FILENAME)
-
-
-# def get_uploaded_metadata(filepath: str):
-#     if os.path.isfile(filepath):
-#         return pd.read_parquet(filepath)
-#     else:
-#         columns = [
-#             'input_filename',
-#             'gameinfo_uploadedFLG',
-#             'gameposition_uploadedFLG',
-#             'playersinfo_uploadedFLG',
-#             'teamsinfo_uploadedFLG',
-#             'lastuploadDTS'
-#         ]
-#         return pd.DataFrame(columns=columns)
 
 
 def get_file_idx_in_uploaded(
@@ -87,8 +73,8 @@ class S3FileFormatETL(object):
             'input_filename',
             'gameinfo_uploadedFLG',
             'gameposition_uploadedFLG',
-            'playersinfo_uploadedFLG',
-            'teamsinfo_uploadedFLG',
+            'playerinfo_uploadedFLG',
+            'teaminfo_uploadedFLG',
             'lastuploadDTS'
         ]
         self.df_uploaded = get_uploaded_metadata(
@@ -136,22 +122,32 @@ class S3FileFormatETL(object):
         transform_functions = {
             'gameinfo': get_game_info,
             'gameposition': get_game_position_info,
-            'playersinfo': get_player_info,
-            'teamsinfo': get_team_info
+            'playerinfo': get_player_info,
+            'teaminfo': get_team_info
         }
         self.data_paths = {}
-        for name, function in transform_functions.items():
-            self.data_paths[name] = os.path.join(
-                self.tmp_dir, '{}_{}.parquet.snappy'.format(name, self.gameid)
-            )
+        for name, function in transform_functions.items():  
             # execute function and save
             # TODO: update type of exception
             try:
                 logger.info('Transforming {} data and saving as parquet'.format(name))
-                function(data).to_parquet(
-                    fname=self.data_paths[name],
-                    compression='snappy'
+
+                table_dir = os.path.join(
+                    self.tmp_dir,
+                    name,
+                    'season={}'.format(self.season_year),
+                    'gameid={}'.format(self.gameid)
                 )
+                pq.write_to_dataset(
+                    table=function(data),
+                    root_path=os.path.join(self.tmp_dir, name),
+                    partition_cols=['season', 'gameid'],
+                    compression='snappy',
+                    preserve_index=False
+                )
+
+                # collect table filepath
+                self.data_paths[name] = os.path.join(table_dir, os.listdir(table_dir)[0])
                 
             except Exception as err:
                 logger.error(err)
@@ -161,7 +157,6 @@ class S3FileFormatETL(object):
 
                 # continue to next element in for loop
                 continue
-
 
     def load(self):
         # Uploading files to s3  
@@ -173,7 +168,7 @@ class S3FileFormatETL(object):
                 s3.upload_file(
                     Filename=path,
                     Bucket=self.destination_bucket,
-                    Key='{}/season={}/gameid={}/{}.parquet'.format(
+                    Key='{}/season={}/gameid={}/{}.parquet.snappy'.format(
                         tablename,
                         self.season_year,
                         self.gameid,
@@ -194,7 +189,7 @@ class S3FileFormatETL(object):
         logger.info('Removing temporary directory')
         shutil.rmtree(self.tmp_dir)
         # update the uploadDTS stamp
-        today = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        today = datetime.datetime.utcnow().strftime('%F %TZ')
         self.df_uploaded.loc[self.file_idx, 'lastuploadDTS'] = today
         # save df_uploaded
         self.df_uploaded.to_parquet(fname=self.uploaded_filepath, compression='snappy')
