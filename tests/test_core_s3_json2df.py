@@ -18,7 +18,7 @@ class TestS3Json2Df(unittest.TestCase):
         self.data = copy.deepcopy(data)
 
     def test_get_player_info(self):
-        df = get_player_info(self.data)
+        table_player_info = get_player_info(self.data)
 
         # all columns exist and named correctly
         self.assertEqual(
@@ -40,16 +40,15 @@ class TestS3Json2Df(unittest.TestCase):
             'lastname',
             'firstname',
             'jersey',
-            'position'
+            'position',
+            'startdate',
+            'enddate'
         ]
-        col_dt = ['startdate', 'enddate']
 
         self.assertTrue(
             all(ptypes.is_string_dtype(df[col]) for col in col_object)
         )
-        self.assertTrue(
-            all(ptypes.is_datetime64_any_dtype(df[col]) for col in col_dt)
-        )
+
         self.assertTrue(ptypes.is_numeric_dtype(df[col]) for col in col_int)
 
         # only two team_ids
