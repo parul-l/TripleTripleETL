@@ -153,22 +153,18 @@ class TestS3FileFormatETL(unittest.TestCase):
             first=extract_output,
             second={}
         )
-
-
     def test_transform(self):
         # etl input mocks
-        inputfile_mock = mock.Mock(return_value='somefile.7z')
-        source_bucket_mock = mock.Mock(return_value='nba-player-positions')
-        destination_bucket_mock = mock.Mock(return_value='nba-game-info')
+        inputfile_mock = 'somefile.7z'
+        source_bucket_mock = 'nba-player-positions'
+        destination_bucket_mock = 'nba-game-info'
         season_year = '2015-2016'
 
-        # function mocks
-        get_game_info_mock = mock.Mock()
-        get_game_position_info_mock = mock.Mock()
-        get_player_info_mock = mock.Mock()
-        get_team_info_mock = mock.Mock()
-        
-        # built in mocks
+        # function input mocks
+        tablename = 'sometable'
+        transform_function_mock = mock.Mock()
+
+        # built in function mocks
         pq_mock = mock.Mock()
         pq_mock.write_to_dataset = mock.Mock()
         os_mock = mock.Mock()
@@ -190,30 +186,24 @@ class TestS3FileFormatETL(unittest.TestCase):
 
         # collect functions to patch
         patches = {
-            'get_game_info': get_game_info_mock,
-            'get_game_position_info': get_game_position_info_mock,
-            'get_player_info': get_player_info_mock,
-            'get_team_info': get_team_info_mock,
             'pq': pq_mock,
             'os': os_mock 
         }
         path = 'triple_triple_etl.load.storage.s37z_to_s3parquet'
         with mock.patch.multiple(path, **patches):
-            etl.transform(data=data)
+            etl._transform(
+                data=data,
+                tablename=tablename,
+                transform_function=transform_function_mock
+            )
         self.assertEqual(
             first=set(etl.data_paths.keys()),
-            second={'gameinfo', 'gameposition', 'playerinfo', 'teaminfo'}
+            second={tablename}
         )
 
-        # check functions are called
-        mock_functions = [
-            get_game_info_mock,
-            get_game_position_info_mock,
-            get_player_info_mock,
-            get_team_info_mock
-        ]
-        for function in mock_functions:
-            function.assert_called_once_with(data)
+        # check transform_function called are called
+        transform_function_mock.assert_called_once_with(data)
+
 
     @moto.mock_s3
     def test_load(self):
@@ -221,6 +211,9 @@ class TestS3FileFormatETL(unittest.TestCase):
         destination_bucket = 'nba-game-info-test'
         season_year = '2015-2016'
         gameid = '1234'
+
+        # _load input
+        tablename = 'sometable'
 
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(destination_bucket)
@@ -238,18 +231,95 @@ class TestS3FileFormatETL(unittest.TestCase):
             etl.gameid = gameid
             etl.df_uploaded = copy.deepcopy(mock_df_uploaded)
             etl.file_idx = 1
-            etl.data_paths = {'gameinfo_test': filename}
+            etl.data_paths = {tablename: filename}
             
-            etl.load()
+            etl._load(tablename=tablename)
 
-        key = '{}/season={}/gameid={}/{}.parquet'.format(
-            'gameinfo_test',
+        key = '{}/season={}/gameid={}/{}.parquet.snappy'.format(
+            tablename,
             season_year,
             gameid,
             os.path.basename(filename)
         )
         objects = list(bucket.objects.filter(Prefix=key))
         assert len(objects) == 1
+
+    def test_transform_tables(self):
+        # instantiate etl 
+        etl = S3FileFormatETL(
+            input_filename='somefile.7z',
+            source_bucket='nba-player-positions',
+            destination_bucket='nba-game-info',
+            season_year='2015-2016'
+        )
+        # mock functions
+        get_game_info_mock = mock.Mock()
+        get_player_info_mock = mock.Mock()
+        get_team_info_mock = mock.Mock()
+        get_game_position_info_mock = mock.Mock()
+        transform_mock = mock.Mock()
+        
+
+        patches = {
+            'get_game_info': get_game_info_mock,
+            'get_player_info': get_player_info_mock,
+            'get_team_info': get_team_info_mock,
+            'get_game_position_info': get_game_position_info_mock,
+        }
+        path = 'triple_triple_etl.load.storage.s37z_to_s3parquet'
+        with mock.patch.multiple(path, **patches):
+            etl._transform = transform_mock   
+            etl.transform_game(data)
+            etl.transform_player(data)
+            etl.transform_team(data)
+            etl.transform_position(data)
+        
+        expected_calls = [
+            mock.call(
+                data=data, 
+                tablename='gameinfo', 
+                transform_function=get_game_info_mock
+            ),
+            mock.call(
+                data=data, 
+                tablename='playerinfo', 
+                transform_function=get_player_info_mock
+            ),
+            mock.call(
+                data=data, 
+                tablename='teaminfo', 
+                transform_function=get_team_info_mock
+            ),
+            mock.call(
+                data=data, 
+                tablename='gameposition', 
+                transform_function=get_game_position_info_mock
+            )
+        ]
+
+    def test_load_tables(self):
+        # instantiate etl 
+        etl = S3FileFormatETL(
+            input_filename='somefile.7z',
+            source_bucket='nba-player-positions',
+            destination_bucket='nba-game-info',
+            season_year='2015-2016'
+        )
+        load_mock = mock.Mock()
+        etl._load = load_mock
+
+        etl.load_game()        
+        etl.load_player()
+        etl.load_team()    
+        etl.load_position()
+    
+        expected_calls = [
+            mock.call(tablename='gameinfo'),
+            mock.call(tablename='playerinfo'),
+            mock.call(tablename='teaminfo'),
+            mock.call(tablename='gameposition')
+        ]
+        load_mock.assert_has_calls(expected_calls, any_order=False)
 
     def test_cleanup(self):
         etl = S3FileFormatETL(
@@ -269,34 +339,67 @@ class TestS3FileFormatETL(unittest.TestCase):
             s.rmtree.assert_called_once_with(etl.tmp_dir)
 
     def test_run(self):
-        etl = S3FileFormatETL(
-            input_filename='somefile.7z',
-            source_bucket='nba-player-positions-test',
-            destination_bucket='nba-game-info-test',
-            season_year='2015-2016'
-        )
-
-        # mock functions
+        # etl mock functions
         metadata_mock = mock.Mock()
-        extract_mock = mock.Mock(return_value={'some': 'data'})
-        transform_mock = mock.Mock()
-        load_mock = mock.Mock()
+        extract_mock = mock.Mock(return_value={'some': 'data'})   
+        transform_game_mock = mock.Mock()
+        transform_player_mock = mock.Mock()
+        transform_team_mock = mock.Mock()
+        transform_position_mock = mock.Mock()
+        load_game_mock = mock.Mock()
+        load_player_mock = mock.Mock()
+        load_team_mock = mock.Mock()
+        load_position_mock = mock.Mock()
         cleanup_mock = mock.Mock()
+        # transform mock functions
+        get_game_info_mock = mock.Mock()
+        get_player_info_mock = mock.Mock()
+        get_team_info_mock = mock.Mock()
+        get_game_position_info_mock = mock.Mock()
+    
+        patches = {
+            'get_game_info': get_game_info_mock,
+            'get_player_info': get_player_info_mock,
+            'get_team_info': get_team_info_mock,
+            'get_game_position_info': get_game_position_info_mock,
+        }
+        path = 'triple_triple_etl.load.storage.s37z_to_s3parquet'
+        with mock.patch.multiple(path, **patches):
+            etl = S3FileFormatETL(
+                input_filename='somefile.7z',
+                source_bucket='nba-player-positions-test',
+                destination_bucket='nba-game-info-test',
+                season_year='2015-2016'
+            )
+            etl.metadata = metadata_mock
+            etl.extract_from_s3 = extract_mock
+            
+            etl.transform_game = transform_game_mock
+            etl.transform_player = transform_player_mock
+            etl.transform_team = transform_team_mock
+            etl.transform_position = transform_position_mock
+            
+            etl.load_game = load_game_mock
+            etl.load_player = load_player_mock
+            etl.load_team = load_team_mock
+            etl.load_position = load_position_mock
+            
+            etl.cleanup = cleanup_mock
 
-        # etl.metadata = mock.Mock()
-        etl.metadata = metadata_mock
-        etl.extract_from_s3 = extract_mock
-        etl.transform = transform_mock
-        etl.load = load_mock
-        etl.cleanup = cleanup_mock
+            # run the etl and check functions are called
+            etl.run()
 
-        # run the etl and check functions are called
-        etl.run()
         # check functions are called
         metadata_mock.assert_called_once_with()
         extract_mock.assert_called_once_with()
-        transform_mock.assert_called_once_with(extract_mock.return_value)
-        load_mock.assert_called_once_with()
+        transform_game_mock.assert_called_once_with(extract_mock.return_value)
+        transform_player_mock.assert_called_once_with(extract_mock.return_value)
+        transform_team_mock.assert_called_once_with(extract_mock.return_value)
+        transform_position_mock.assert_called_once_with(extract_mock.return_value)
+        load_game_mock.assert_called_once_with()
+        load_player_mock.assert_called_once_with()
+        load_team_mock.assert_called_once_with()
+        load_position_mock.assert_called_once_with()
         cleanup_mock.assert_called_once_with()
 
 

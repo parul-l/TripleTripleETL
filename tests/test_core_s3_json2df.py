@@ -1,7 +1,9 @@
 import copy
 
-import unittest
 import pandas.api.types as ptypes
+import pyarrow as pa
+import unittest
+
 
 from tests.fixtures.mock_s3rawdata import data
 from triple_triple_etl.core.s3_json2df import (
@@ -18,12 +20,14 @@ class TestS3Json2Df(unittest.TestCase):
         self.data = copy.deepcopy(data)
 
     def test_get_player_info(self):
-        table_player_info = get_player_info(self.data)
+        table = get_player_info(self.data)
 
         # all columns exist and named correctly
         self.assertEqual(
-            first=set(df.columns),
+            first=set(table.schema.names),
             second={
+                'season',
+                'gameid',
                 'playerid',
                 'firstname',
                 'lastname',
@@ -37,6 +41,8 @@ class TestS3Json2Df(unittest.TestCase):
         # column types are accurate
         col_int = ['playerid', 'teamid']
         col_object = [
+            'season',
+            'gameid',
             'lastname',
             'firstname',
             'jersey',
@@ -45,28 +51,35 @@ class TestS3Json2Df(unittest.TestCase):
             'enddate'
         ]
 
+        object_idx = [table.schema.names.index(col) for col in col_object]
         self.assertTrue(
-            all(ptypes.is_string_dtype(df[col]) for col in col_object)
+            all(pa.string() == table.schema.types[idx] for idx in object_idx)
         )
 
-        self.assertTrue(ptypes.is_numeric_dtype(df[col]) for col in col_int)
-
+        int_idx = [table.schema.names.index(col) for col in col_int]
+        self.assertTrue(
+            all(pa.int64() == table.schema.types[idx] for idx in int_idx)
+        )
+        
         # only two team_ids
-        self.assertEqual(first=len(set(df.teamid.values)), second=2)
+        self.assertEqual(first=len(set(table.column('teamid'))), second=2)
 
         # possible positions
         allowed_position = ['F', 'G', 'C', 'F-G', 'F-C']
         self.assertTrue(
-            set(df.position.values).issubset(allowed_position)
+            set(table.column('position')).issubset(allowed_position)
         )
 
     def test_get_team_info(self):
-        df = get_team_info(self.data)
+        table = get_team_info(self.data)
+        df = table.to_pandas()
 
         # all columns exist and named correctly
         self.assertEqual(
-            first=set(df.columns),
+            first=set(table.schema.names),
             second={
+                'season',
+                'gameid',
                 'teamid',
                 'name',
                 'conference',
@@ -79,54 +92,74 @@ class TestS3Json2Df(unittest.TestCase):
         )
         # column types are accurate
         col_object = [
+            'season',
+            'gameid',
             'name',
             'conference',
             'division',
             'city',
-            'state'
+            'state',
+            'startdate',
+            'enddate'
         ]
-        col_dt = ['startdate', 'enddate']
+        
         self.assertTrue(
             all(ptypes.is_string_dtype(df[col]) for col in col_object)
         )
-        self.assertTrue(
-            all(ptypes.is_datetime64_any_dtype(df[col]) for col in col_dt)
-        )
+
         self.assertTrue(ptypes.is_numeric_dtype(df['teamid']))
 
         # only two team_ids
         self.assertEqual(first=len(set(df.teamid.values)), second=2)
 
     def test_get_game_info(self):
-        df = get_game_info(self.data)
+        table = get_game_info(self.data)
+        df = table.to_pandas()
 
         # all columns exist and named correctly
         self.assertEqual(
             first=set(df.columns),
             second={
+                'season',
                 'gameid',
                 'gamedate',
                 'home_teamid',
                 'visitor_teamid',
             }
         )
+
+
         # column types are accurate
-        self.assertTrue(ptypes.is_string_dtype(df['gameid']))
+        col_object = [
+            'season',
+            'gameid',
+            'gamedate'
+        ]
+        col_int = [
+            'home_teamid',
+            'visitor_teamid'
+        ]
+        
+        self.assertTrue(
+            all(ptypes.is_string_dtype(df[col]) for col in col_object)
+        )
         self.assertTrue(all(
-            ptypes.is_numeric_dtype(df[col]) for col in ['home_teamid', 'visitor_teamid']
-        ))
-        self.assertTrue(ptypes.is_datetime64_any_dtype(df['gamedate']))
+            ptypes.is_numeric_dtype(df[col]) for col in col_int)
+        )
 
     def test_get_game_position_info(self):
-        df = get_game_position_info(self.data)
+        table = get_game_position_info(self.data)
+        df = table.to_pandas()
 
         # all columns exist and named correctly
         self.assertEqual(
             first=set(df.columns),
             second={
+                'season',
                 'gameid',
                 'eventid',
-                'timestamp',
+                'timestamp_dts',
+                'timestamp_utc',
                 'period',
                 'periodclock',
                 'shotclock',
@@ -150,11 +183,12 @@ class TestS3Json2Df(unittest.TestCase):
             'z_coordinate',
         ]
 
-        self.assertTrue(ptypes.is_string_dtype(df['gameid']))
+        self.assertTrue(
+            all(ptypes.is_string_dtype(df[col]) for col in ['gameid', 'season'])
+        )
         self.assertTrue(
             all(ptypes.is_numeric_dtype(df[col]) for col in col_num)
         )
-        self.assertTrue(ptypes.is_datetime64_any_dtype(df['timestamp']))
 
         # check ranges are correct
         self.assertTrue(set(df.period) < {1, 2, 3, 4})

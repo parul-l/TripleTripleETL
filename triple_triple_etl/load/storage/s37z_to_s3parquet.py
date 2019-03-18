@@ -214,73 +214,6 @@ class S3FileFormatETL(object):
         self._load(tablename='gameposition')
 
 
-
-    # def transform(self, data: dict):
-    #     transform_functions = {
-    #         'gameinfo': get_game_info,
-    #         'gameposition': get_game_position_info,
-    #         'playerinfo': get_player_info,
-    #         'teaminfo': get_team_info
-    #     }
-    #     self.data_paths = {}
-    #     for name, function in transform_functions.items():  
-    #         # execute function and save
-    #         # TODO: update type of exception
-    #         try:
-    #             logger.info('Transforming {} data and saving as parquet'.format(name))
-
-    #             table_dir = os.path.join(
-    #                 self.tmp_dir,
-    #                 name,
-    #                 'season={}'.format(self.season_year),
-    #                 'gameid={}'.format(self.gameid)
-    #             )
-    #             pq.write_to_dataset(
-    #                 table=function(data),
-    #                 root_path=os.path.join(self.tmp_dir, name),
-    #                 partition_cols=['season', 'gameid'],
-    #                 compression='snappy',
-    #                 preserve_index=False
-    #             )
-
-    #             # collect table filepath
-    #             self.data_paths[name] = os.path.join(table_dir, os.listdir(table_dir)[0])
-                
-    #         except Exception as err:
-    #             logger.error(err)
-    #             # update metadata
-    #             self.df_uploaded\
-    #                 .loc[self.file_idx, '{}_uploadedFLG'.format(name)] = 0
-
-    #             # continue to next element in for loop
-    #             continue
-
-    # def load(self):
-    #     # Uploading files to s3  
-    #     for tablename, path in self.data_paths.items():
-    #         try:
-    #             logger.info('Uploading {} to s3'.format(tablename))
-    #             output_file = os.path.splitext(os.path.basename(self.input_filename))[0]\
-    #                             .replace('.', '')
-    #             s3.upload_file(
-    #                 Filename=path,
-    #                 Bucket=self.destination_bucket,
-    #                 Key='{}/season={}/gameid={}/{}.parquet.snappy'.format(
-    #                     tablename,
-    #                     self.season_year,
-    #                     self.gameid,
-    #                     output_file
-    #                 )
-    #             )
-    #             self.df_uploaded\
-    #                 .loc[self.file_idx, '{}_uploadedFLG'.format(tablename)] = 1
-    #         except (boto3.exceptions.botocore.client.ClientError, FileNotFoundError) as err:
-    #             logger.error(err)
-    #             self.df_uploaded\
-    #                 .loc[self.file_idx, '{}_uploadedFLG'.format(tablename)] = 0
-    #             # continue to next element in for loop
-    #             continue
-
     def cleanup(self):
         # remove tmp directory
         logger.info('Removing temporary directory')
@@ -296,14 +229,14 @@ class S3FileFormatETL(object):
 
         data = self.extract_from_s3()
 
-        # self.transform_game(data)
-        # self.transform_player(data)
-        # self.transform_team(data)
+        self.transform_game(data)
+        self.transform_player(data)
+        self.transform_team(data)
         self.transform_position(data)
 
-        # self.load_game()
-        # self.load_player()
-        # self.load_team()
+        self.load_game()
+        self.load_player()
+        self.load_team()
         self.load_position()
 
         self.cleanup()

@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     transform_upload_all_games(
         season_year='2015-2016',
-        all_files=df_all_files.filename[1:]
+        all_files=df_all_files.filename[283:]
     )
 
 
