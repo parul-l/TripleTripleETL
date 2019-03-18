@@ -58,7 +58,7 @@ class S3FileFormatETL(object):
         self.season_year = season_year
         self.tmp_dir = None
         self.gameid = None
-        self.data_paths = None
+        self.data_paths = {}
         self.df_uploaded = None
         self.file_idx = None
         
@@ -173,16 +173,32 @@ class S3FileFormatETL(object):
 
 
     def transform_game(self, data: dict):
-        self._transform(data=data, tablename='gameinfo', transform_function=get_game_info)
+        self._transform(
+            data=data, 
+            tablename='gameinfo', 
+            transform_function=get_game_info
+        )
 
     def transform_player(self, data: dict):
-        self._transform(data=data, tablename='playerinfo', transform_function=get_player_info)
+        self._transform(
+            data=data, 
+            tablename='playerinfo', 
+            transform_function=get_player_info
+        )
 
     def transform_team(self, data: dict):
-        self._transform(data=data, tablename='teaminfo', transform_function=get_team_info)
+        self._transform(
+            data=data, 
+            tablename='teaminfo', 
+            transform_function=get_team_info
+        )
 
     def transform_position(self, data: dict):
-        self._transform(data=data, tablename='gameposition', transform_function=get_game_position_info)
+        self._transform(
+            data=data, 
+            tablename='gameposition', 
+            transform_function=get_game_position_info
+        )
 
 
     def load_game(self):
@@ -280,14 +296,14 @@ class S3FileFormatETL(object):
 
         data = self.extract_from_s3()
 
-        self.transform_game(data)
-        self.transform_player(data)
-        self.transform_team(data)
+        # self.transform_game(data)
+        # self.transform_player(data)
+        # self.transform_team(data)
         self.transform_position(data)
 
-        self.load_game()
-        self.load_player()
-        self.load_team()
+        # self.load_game()
+        # self.load_player()
+        # self.load_team()
         self.load_position()
 
         self.cleanup()
