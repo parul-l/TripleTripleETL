@@ -13,3 +13,10 @@ def get_uploaded_metadata(
         return df
     else:
         return pd.DataFrame(columns=columns)
+
+
+def format_year(year: str):
+    start = year.split('-')[0]
+    end = str(int(start) + 1)
+
+    return '-'.join([start, end])
