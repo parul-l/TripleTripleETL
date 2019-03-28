@@ -20,6 +20,16 @@ BASE_URL_PLAY = 'http://stats.nba.com/stats/playbyplayv2'
 BASE_URL_BOX_SCORE_TRADITIONAL = 'http://stats.nba.com/stats/boxscoretraditionalv2'
 BASE_URL_BOX_SCORE_PLAYER_TRACKING = 'http://stats.nba.com/stats/boxscoreplayertrackv2'
 
+NBASTATS_PARAMS = {
+    'EndPeriod': '10',
+    'EndRange': '55800',    
+    'GameID': None,
+    'RangeType': '2',       
+    'Season': None,
+    'SeasonType': 'Regular Season',
+    'StartPeriod': '1',     
+    'StartRange': '0',      
+}
 
 MAX_STORAGE_MB = 1000
 SCHEMA_DIR = os.path.join(MODULE_HOME, 'load', 'schemata')
