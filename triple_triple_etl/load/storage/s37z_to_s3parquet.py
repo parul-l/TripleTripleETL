@@ -42,7 +42,7 @@ def get_file_idx_in_uploaded(
             .index[0]
     except:
         return df_uploaded.shape[0]
-  
+
 
 class S3FileFormatETL(object):
     def __init__(
@@ -50,17 +50,16 @@ class S3FileFormatETL(object):
         input_filename: str, 
         source_bucket: str = SOURCE_BUCKET,
         destination_bucket: str = DESTINATION_BUCKET,
-        season_year: str = '2015-2016'
+        season: str = '2015-2016'
     ):
         self.input_filename = input_filename
         self.source_bucket = source_bucket
         self.destination_bucket = destination_bucket
-        self.season_year = season_year
+        self.season = season
         self.tmp_dir = None
         self.gameid = None
         self.data_paths = {}
         self.df_uploaded = None
-        self.file_idx = None
         
         meta_data_filename = 'rawpositiontransformed_s3uploaded.parquet.snappy'
         self.uploaded_filepath = os.path.join(META_DIR, meta_data_filename)
@@ -81,10 +80,12 @@ class S3FileFormatETL(object):
             self.uploaded_filepath,
             columns=columns
         )
+        # get index of filename
         self.file_idx = get_file_idx_in_uploaded(
             df_uploaded=self.df_uploaded,
             input_filename=self.input_filename
         )
+
         # add row to df_uploaded if file DNE (ie file_idx == len(df_uploaded))
         if self.file_idx == self.df_uploaded.shape[0]:
             self.df_uploaded.loc[self.file_idx] = [self.input_filename] + [np.nan] * 5
@@ -125,7 +126,7 @@ class S3FileFormatETL(object):
             table_dir = os.path.join(
                 self.tmp_dir,
                 tablename,
-                'season={}'.format(self.season_year),
+                'season={}'.format(self.season),
                 'gameid={}'.format(self.gameid)
             )
             pq.write_to_dataset(
@@ -159,7 +160,7 @@ class S3FileFormatETL(object):
                 Bucket=self.destination_bucket,
                 Key='{}/season={}/gameid={}/{}.parquet.snappy'.format(
                     tablename,
-                    self.season_year,
+                    self.season,
                     self.gameid,
                     output_file
                 )
@@ -243,7 +244,7 @@ class S3FileFormatETL(object):
 
 
 def transform_upload_all_games(
-        season_year: str,
+        season: str,
         all_files: list,
         idx: list = [],
         source_bucket: str = SOURCE_BUCKET,
@@ -261,7 +262,7 @@ def transform_upload_all_games(
                 input_filename=filename, 
                 source_bucket=source_bucket,
                 destination_bucket=destination_bucket,
-                season_year=season_year
+                season=season
             )
             etl.run()
             etl_time = datetime.datetime.now()
