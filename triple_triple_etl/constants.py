@@ -13,6 +13,7 @@ DATATABLES_DIR = os.path.abspath(config['path']['datatables_dir'])
 DATASETS_DIR = os.path.abspath(config['path']['datasets_dir'])
 LOGS_DIR = os.path.abspath(config['path']['logs_dir'])
 META_DIR = os.path.abspath(config['path']['metadata_dir'])
+TEST_DIR = os.path.abspath(config['path']['test_dir'])
 
 BASE_URL_GAMELOG = 'https://stats.nba.com/stats/leaguegamelog'
 BASE_URL_PLAY = 'http://stats.nba.com/stats/playbyplayv2'
