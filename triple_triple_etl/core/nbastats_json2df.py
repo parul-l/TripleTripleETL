@@ -8,22 +8,27 @@ from triple_triple_etl.log import get_logger
 logger = get_logger()
 
 
-def get_play_by_play(play_data: dict, season: str='2015-16'):
-    logger.info('Get play by play data')
-
-    headers = [x.lower() for x in play_data['resultSets'][0]['headers']]
+def convert_data_to_df(data: dict, season: str = '2015-16'):
+    headers = [x.lower() for x in data['resultSets'][0]['headers']]
     df = pd.DataFrame(
-        data=play_data['resultSets'][0]['rowSet'],
+        data=data['resultSets'][0]['rowSet'],
         columns=headers
     )
+    # add season
+    df.loc[:, 'season'] = season
+
+    return df
+
+
+def get_play_by_play(play_data: dict, season: str = '2015-16'):
+    logger.info('Get play by play data')
+
+    df = convert_data_to_df(data=play_data, season=season)
 
     # convert timestamp
     df.loc[:, 'wctimestring'] = df.wctimestring.apply(
         lambda x: datetime.datetime.strptime(x, '%I:%M %p').strftime('%H:%M:%S')
     )
-    # add season
-    df.loc[:, 'season'] = season
-
     # enforce datatypes
     dtype = {    
         'game_id':'object',
@@ -63,3 +68,92 @@ def get_play_by_play(play_data: dict, season: str='2015-16'):
     df = df.astype(dtype)
     # convert to pyarrow table
     return pa.Table.from_pandas(df, preserve_index=False)
+
+
+def get_boxscore(
+        bs_data: dict,
+        traditional_player: 'traditional', # or 'player'
+        season: str = '2015-16'
+):
+    logger.info('Get {} box score data'.format(traditional_player))
+
+    df = convert_data_to_df(data=bs_data, season=season)
+    # convert minutes to datetime
+    df.loc[:, 'min'] = df['min'].apply(lambda x: x.replace(':', '.'))
+    
+    if traditional_player == 'traditional':
+        # rename min column to minutes (to avoid built-in min, pass)
+        rename_cols = {'min': 'minutes'} 
+        # enforce dtype       
+        dtype = {
+            'game_id': 'object',
+            'team_id': 'int64',
+            'team_abbreviation': 'object',
+            'team_city': 'object',
+            'player_id': 'int64',
+            'player_name': 'object',
+            'start_position': 'object',
+            'comment': 'object',
+            'minutes': 'object',
+            'fgm': 'int64',
+            'fga': 'int64',
+            'fg_pct': 'float64',
+            'fg3m': 'int64',
+            'fg3a': 'int64',
+            'fg3_pct': 'float64',
+            'ftm': 'int64',
+            'fta': 'int64',
+            'ft_pct': 'float64',
+            'oreb': 'int64',
+            'dreb': 'int64',
+            'reb': 'int64',
+            'ast': 'int64',
+            'stl': 'int64',
+            'blk': 'int64',
+            'to': 'int64',
+            'pf': 'int64',
+            'pts': 'int64',
+            'plus_minus': 'float64',
+            'season': 'object'
+        }
+    # if not traditional 
+    elif traditional_player == 'player':
+        rename_cols = {'min': 'minutes', 'pass': 'passes'} 
+        dtype = {
+            'game_id': 'object',
+            'team_id': 'int64',
+            'team_abbreviation': 'object',
+            'team_city': 'object',
+            'player_id': 'int64',
+            'player_name': 'object',
+            'start_position': 'object',
+            'comment': 'object',
+            'minutes': 'object',
+            'spd': 'float64',
+            'dist': 'float64',
+            'orbc': 'int64',
+            'drbc': 'int64',
+            'rbc': 'int64',
+            'tchs': 'int64',
+            'sast': 'int64',
+            'ftast': 'int64',
+            'passes': 'int64',
+            'ast': 'int64',
+            'cfgm': 'int64',
+            'cfga': 'int64',
+            'cfg_pct': 'float64',
+            'ufgm': 'int64',
+            'ufga': 'int64',
+            'ufg_pct': 'float64',
+            'fg_pct': 'float64',
+            'dfgm': 'int64',
+            'dfga': 'int64',
+            'dfg_pct': 'float64',
+            'season': 'object'
+        }
+
+    df.rename(columns=rename_cols, inplace=True)
+    df = df.astype(dtype)
+    # convert to pyarrow table
+    return pa.Table.from_pandas(df, preserve_index=False)
+
