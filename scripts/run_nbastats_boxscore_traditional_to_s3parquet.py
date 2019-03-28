@@ -8,11 +8,10 @@ from triple_triple_etl.load.storage.nbastats_to_s3parquet import upload_all_nbas
 if __name__ == '__main__':
     filepath = os.path.join(META_DIR, 'nbastats_gamelog_to_s3parquet.parquet.snappy')
     df_gamelog_meta = pd.read_parquet(filepath)
-    
 
     upload_all_nbastats(
         df_gamelog_meta=df_gamelog_meta,
-        game_data_type='playbyplay',
-        start_date='2016-01-01',
+        game_data_type='boxscore_traditional',
+        start_date='2015-10-27',
         end_date='2016-04-14'
     ) 
