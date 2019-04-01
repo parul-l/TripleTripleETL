@@ -9,90 +9,76 @@ import tempfile
 import unittest
 import unittest.mock as mock
 
-from tests.fixtures.mock_nbastats_gamelog_rawdata import (
-    mock_gamelog_data,
+from tests.fixtures.mock_nbastats_data import (
+    # mock_gamelog_data,
     mock_df_uploaded
 )
 from triple_triple_etl.load.storage.nbastats_to_s3parquet import (
-    get_first_last_date_season,
-    append_upload_metadata,
-    NBAStatsGameLogsS3ETL
+    get_file_idx_in_uploaded,
+    NBAStatsS3ETL,
+    upload_all_nbastats
 )
-from triple_triple_etl.constants import BASE_URL_GAMELOG, META_DIR, TEST_DIR
+from triple_triple_etl.constants import (
+    BASE_URL_PLAY,
+    BASE_URL_BOX_SCORE_TRADITIONAL,
+    BASE_URL_BOX_SCORE_PLAYER_TRACKING,
+    DESTINATION_BUCKET,
+    META_DIR,
+    NBASTATS_PARAMS
+)
 
-
-class TestHelpers(unittest.TestCase):
-    def test_first_last_date_season(self):
-        
-        get_data_mock = mock.Mock(return_value=mock_gamelog_data)
-        
-        path = 'triple_triple_etl.load.storage.nbastats_to_s3parquet.get_data'
-        with mock.patch(path, get_data_mock):
-            result_first = get_first_last_date_season(
-                season='2015-16',
-                datefrom='10/01/2015',
-                dateto='10/31/2015',
-                first=1
-            )
-            
-            result_last = get_first_last_date_season(
-                season='2015-16',
-                datefrom='10/01/2015',
-                dateto='10/31/2015',
-                first=0
-            )
-        
-        assert result_first == '10/27/2015' # from mock data
-        assert result_last == '10/31/2015' # from mock data
-    
-
-    def test_append_upload_metadata(self):
-        data_cols = ['season', 'game_date', 'game_id', 'random']
-        upload_cols = [
-            'season', 'game_date', 'game_id',
-            'gamelog_uploadedFLG', 'lastuploadDTS',
-            'base_url', 'params'
-        ]
-        df_data_mock = pd.DataFrame([list('abcd')], columns=data_cols)
-        df_upload_mock = pd.DataFrame([list('efghijk')], columns=upload_cols)
-        
-        df_result = append_upload_metadata(
-            df_data=df_data_mock,
-            df_upload=df_upload_mock,
-            lastuploadDTS='mock-time',
-            base_url='mock-url',
-            params='mock-params',
-            uploadFLG=1
+class TestHelper(unittest.TestCase):
+    """Test get_file_idx_in_uploaded"""
+    def test_file_exists(self):
+        idx = get_file_idx_in_uploaded(
+            df_uploaded=mock_df_uploaded,
+            gameid='1234'
         )
+        assert idx == 0
 
-        self.assertEqual(first=df_result.shape[0], second=2)
-        # check a few columns
-        self.assertEqual(first=set(df_result.season), second={'a', 'e'})
-        self.assertEqual(first=set(df_result.params), second={'k', 'mock-params'})
-        self.assertEqual(first=set(df_result.game_id), second={'g', 'c'})
+    def test_file_dne(self):
+        idx = get_file_idx_in_uploaded(
+            df_uploaded=mock_df_uploaded,
+            gameid='9999'
+        )
+        assert idx == mock_df_uploaded.shape[0]
 
+ 
+class TestNBAStatsS3ETL(unittest.TestCase):
+    """ Tests for NBAStatsS3ETL """
 
-class TestNBAStatsGameLogsS3ETL(unittest.TestCase):
-    """Tests for nbastats_to_s3parquet.py"""
-    
-    def test_metadata(self):    
+    def test_metadata(self):
         # mock functions
         get_upload_metadata_mock = mock.Mock(return_value=mock_df_uploaded)
+        get_file_idx_in_uploaded_mock = mock.Mock()
         
-        path = 'triple_triple_etl.load.storage.nbastats_to_s3parquet.get_uploaded_metadata'
-        with mock.patch(path, get_upload_metadata_mock):   
-            etl = NBAStatsGameLogsS3ETL(
-                datefrom='01/23/2016',
-                dateto='03/23/2016',
-                season_year='2015-2016',
+        patches = {
+            'get_uploaded_metadata': get_upload_metadata_mock,
+            'get_file_idx_in_uploaded': get_file_idx_in_uploaded_mock
+        }
+        path = 'triple_triple_etl.load.storage.nbastats_to_s3parquet'
+        with mock.patch.multiple(path, **patches):   
+            etl = NBAStatsS3ETL(
+                gameid='someid',
+                gamedate='04-01-2019',
+                team1='mock-team1',
+                team2='mock-team2',
+                game_data_type='playbyplay',
+                season='2015-2016',
                 destination_bucket='nba-game-info',
             )
+            etl.df_uploaded = mock_df_uploaded
             etl.metadata()
         
         get_upload_metadata_mock.assert_called_once_with(
             etl.uploaded_filepath,
             columns=list(mock_df_uploaded.columns)
         )
+        get_file_idx_in_uploaded_mock.assert_called_once_with(
+            df_uploaded=mock_df_uploaded,
+            gameid=etl.gameid
+        )
+
 
     def test_extract(self):
         # mock functions
@@ -100,12 +86,15 @@ class TestNBAStatsGameLogsS3ETL(unittest.TestCase):
 
         path = 'triple_triple_etl.load.storage.nbastats_to_s3parquet.get_data'
         with mock.patch(path, get_data_mock):
-            etl = NBAStatsGameLogsS3ETL(
-                datefrom='01/23/2016',
-                dateto='03/23/2016',
-                season_year='2015-2016',
+            etl = NBAStatsS3ETL(
+                gameid='someid',
+                gamedate='04-01-2019',
+                team1='mock-team1',
+                team2='mock-team2',
+                game_data_type='playbyplay',
+                season='2015-2016',
                 destination_bucket='nba-game-info',
-            ) 
+            )
             etl.extract()
         
         get_data_mock.assert_called_once_with(
@@ -113,32 +102,72 @@ class TestNBAStatsGameLogsS3ETL(unittest.TestCase):
             params=etl.params
         )
 
-    def test_transform(self):
+    def test_transform_playbyplay(self):
+        # mock functions
+        data = {'some': 'data'}
+        get_play_by_play_mock = mock.Mock(return_value='table_playbyplay')
+        pq_mock = mock.Mock()
+        pq_mock.write_to_dataset = mock.Mock()
+        
+        patches = {
+            'get_play_by_play': get_play_by_play_mock,
+            'pq': pq_mock
+        }        
+        path = 'triple_triple_etl.load.storage.nbastats_to_s3parquet'        
+        with mock.patch.multiple(path, **patches):
+            etl = NBAStatsS3ETL(
+                gameid='someid',
+                gamedate='04-01-2019',
+                team1='mock-team1',
+                team2='mock-team2',
+                game_data_type='playbyplay',
+                season='2015-2016',
+                destination_bucket='nba-game-info',
+            )
+            etl.transform(data=data)
 
-        etl = NBAStatsGameLogsS3ETL(
-            datefrom='01/23/2016',
-            dateto='03/23/2016',
-            season_year='2015-2016',
-            destination_bucket='nba-game-info',
+        # check functions are called        
+        get_play_by_play_mock.assert_called_once_with(data, season='2015-2016')
+        pq_mock.write_to_dataset.assert_called_once_with(
+            table=get_play_by_play_mock.return_value,
+            root_path=etl.tmp_dir,
+            partition_cols=['season', 'game_id'],
+            compression='snappy',
+            preserve_index=False
         )
-        # re-assign tmp_dir for testing purposes
-        etl.tmp_dir = os.path.join(TEST_DIR, 'test_tmp')
-        etl.transform(mock_gamelog_data)
 
-        # check files/dir as expected
-        # check season
-        self.assertEqual(
-            first=set(os.listdir(etl.tmp_dir)),
-            second={'season={}'.format(etl.season_year)}
-        )
-        # check games
-        season_dir = os.path.join(etl.tmp_dir, 'season={}'.format(etl.season_year))
-        self.assertEqual(
-            first=set(os.listdir(season_dir)),
-            second={'game_id=02', 'game_id=03'}
-        )
-        # remove created dir
-        shutil.rmtree(season_dir)
+    def test_transform_boxscore(self):
+        # mock functions
+        data = {'some': 'data'}
+        get_boxscore_mock = mock.Mock(return_value='table_boxscore')
+        pq_mock = mock.Mock()
+        pq_mock.write_to_dataset = mock.Mock()        
+
+        patches = {
+            'get_boxscore': get_boxscore_mock,
+            'pq': pq_mock
+        }
+
+        path = 'triple_triple_etl.load.storage.nbastats_to_s3parquet'
+        for game_type in ['boxscore_traditional', 'boxscore_player']:
+            with mock.patch.multiple(path, **patches):
+                etl = NBAStatsS3ETL(
+                    gameid='someid',
+                    gamedate='04-01-2019',
+                    team1='mock-team1',
+                    team2='mock-team2',
+                    game_data_type=game_type,
+                    season='2015-2016',
+                    destination_bucket='nba-game-info',
+                )
+                etl.transform(data=data)
+                
+        expected_calls = [
+            mock.call(data, season='2015-2016', traditional_player='traditional'),
+            mock.call(data, season='2015-2016', traditional_player='player')    
+        ]
+        get_boxscore_mock.assert_has_calls(expected_calls, any_order=False)        
+        self.assertEqual(pq_mock.write_to_dataset.call_count, 2)
 
     @moto.mock_s3
     def test_load(self):
@@ -146,26 +175,34 @@ class TestNBAStatsGameLogsS3ETL(unittest.TestCase):
         bucket = s3.Bucket('nba-game-info')
         bucket.create()
 
-        etl = NBAStatsGameLogsS3ETL(
-            datefrom='01/23/2016',
-            dateto='03/23/2016',
-            season_year='2015-2016',
+        etl = NBAStatsS3ETL(
+            gameid='someid',
+            gamedate='04-01-2019',
+            team1='mock-team1',
+            team2='mock-team2',
+            game_data_type='playbyplay',
+            season='2015-2016',
             destination_bucket='nba-game-info',
         )
-
-    # TODO: How to test this function
-
+        # TODO: How to test this function
 
     def test_cleanup(self):
-        etl = NBAStatsGameLogsS3ETL(
-            datefrom='01/23/2016',
-            dateto='03/23/2016',
-            season_year='2015-2016',
+
+        etl = NBAStatsS3ETL(
+            gameid='someid',
+            gamedate='04-01-2019',
+            team1='mock-team1',
+            team2='mock-team2',
+            game_data_type='playbyplay',
+            season='2015-2016',
             destination_bucket='nba-game-info',
         )
         # update some attributes
         etl.tmp_dir = '/tmp/somedir'
         etl.df_uploaded = copy.deepcopy(mock_df_uploaded)
+        etl.file_idx = 1
+        # mock functions
+        etl.df_uploaded.to_parquet = mock.Mock()
 
         path = 'triple_triple_etl.load.storage.nbastats_to_s3parquet.shutil'
         with mock.patch(path, mock.Mock()) as s:
@@ -181,11 +218,13 @@ class TestNBAStatsGameLogsS3ETL(unittest.TestCase):
         load_mock = mock.Mock()
         cleanup_mock = mock.Mock()
 
-    
-        etl = NBAStatsGameLogsS3ETL(
-            datefrom='01/23/2016',
-            dateto='03/23/2016',
-            season_year='2015-2016',
+        etl = NBAStatsS3ETL(
+            gameid='someid',
+            gamedate='04-01-2019',
+            team1='mock-team1',
+            team2='mock-team2',
+            game_data_type='playbyplay',
+            season='2015-2016',
             destination_bucket='nba-game-info',
         )
         etl.metadata = metadata_mock
@@ -201,7 +240,7 @@ class TestNBAStatsGameLogsS3ETL(unittest.TestCase):
         metadata_mock.assert_called_once_with()
         extract_mock.assert_called_once_with()
         transform_mock.assert_called_once_with(extract_mock.return_value)
-        load_mock.assert_called_once_with(transform_mock.return_value)
+        load_mock.assert_called_once_with()
         cleanup_mock.assert_called_once_with()
 
 
