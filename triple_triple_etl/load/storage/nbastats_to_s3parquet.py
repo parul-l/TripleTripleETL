@@ -55,7 +55,7 @@ def get_file_idx_in_uploaded(
 class NBAStatsS3ETL(object):
     """
     Extract data from NBA stats API. 
-    'game_data_type' is one of {'playbyplay', 'boxscore_traditional', boxscore_player'}
+    'game_data_type' is one of {'playbyplay', 'boxscore_traditional', 'boxscore_player'}
     """
     def __init__(
         self,
