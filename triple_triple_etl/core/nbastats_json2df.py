@@ -9,12 +9,15 @@ logger = get_logger()
 
 
 def convert_data_to_df(data: dict, season: str = '2015-16'):
-    headers = [x.lower() for x in data['resultSets'][0]['headers']]
-    df = pd.DataFrame(
-        data=data['resultSets'][0]['rowSet'],
-        columns=headers
-    )
-    # add season
+    all_dfs = [
+        pd.DataFrame(
+            data=games['rowSet'],
+            columns=[x.lower() for x in games['headers']]
+        ) 
+        for games in data['resultSets']
+    ]
+    # join all dfs (usually just one), add season
+    df = pd.concat(all_dfs, ignore_index=True, sort=False)
     df.loc[:, 'season'] = season
 
     return df
@@ -90,7 +93,7 @@ def get_boxscore(
             'team_id': 'int64',
             'team_abbreviation': 'object',
             'team_city': 'object',
-            'player_id': 'int64',
+            'player_id': 'float64',
             'player_name': 'object',
             'start_position': 'object',
             'comment': 'object',
@@ -114,7 +117,9 @@ def get_boxscore(
             'pf': 'int64',
             'pts': 'int64',
             'plus_minus': 'float64',
-            'season': 'object'
+            'team_name': 'object',
+            'starters_bench': 'object',
+            'season': 'object',
         }
     # if not traditional 
     elif traditional_player == 'player':
@@ -124,7 +129,7 @@ def get_boxscore(
             'team_id': 'int64',
             'team_abbreviation': 'object',
             'team_city': 'object',
-            'player_id': 'int64',
+            'player_id': 'float64',
             'player_name': 'object',
             'start_position': 'object',
             'comment': 'object',
@@ -149,7 +154,8 @@ def get_boxscore(
             'dfgm': 'int64',
             'dfga': 'int64',
             'dfg_pct': 'float64',
-            'season': 'object'
+            'team_name': 'object',
+            'season': 'object',
         }
 
     df.rename(columns=rename_cols, inplace=True)
