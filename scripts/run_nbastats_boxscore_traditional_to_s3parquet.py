@@ -14,4 +14,4 @@ if __name__ == '__main__':
         game_data_type='boxscore_traditional',
         start_date='2015-10-27',
         end_date='2016-04-14'
-    ) 
+    )
