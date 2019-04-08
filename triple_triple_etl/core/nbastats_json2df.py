@@ -128,7 +128,7 @@ def get_boxscore(
         rename_cols = {'min': 'minutes', 'pass': 'passes'} 
         dtype = {
             'game_id': 'object',
-            'team_id': 'float64',
+            'team_id': 'int64',
             'team_abbreviation': 'object',
             'team_city': 'object',
             'player_id': 'float64',
