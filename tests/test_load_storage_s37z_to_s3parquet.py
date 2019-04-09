@@ -40,14 +40,14 @@ class TestS3FileFormatETL(unittest.TestCase):
         inputfile_mock = mock.Mock(return_value='somefile.7z')
         source_bucket_mock = mock.Mock(return_value='nba-player-positions')
         destination_bucket_mock = mock.Mock(return_value='nba-game-info')
-        season_year = '2015-2016'
+        season = '2015-2016'
 
         
         etl = S3FileFormatETL(
             input_filename=inputfile_mock,
             source_bucket=source_bucket_mock,
             destination_bucket=destination_bucket_mock,
-            season_year=season_year
+            season=season
         )
         get_uploaded_metadata_mock = mock.Mock(return_value=mock_df_uploaded)
         get_file_idx_uploaded_mock = mock.Mock()
@@ -88,7 +88,7 @@ class TestS3FileFormatETL(unittest.TestCase):
         inputfile_mock = mock.Mock(return_value='somefile.7z')
         source_bucket_mock = mock.Mock(return_value='nba-player-positions')
         destination_bucket_mock = mock.Mock(return_value='nba-game-info')
-        season_year = '2015-2016'
+        season = '2015-2016'
 
         # function mocks
         s3download_mock = mock.Mock(return_value='some.txt')
@@ -109,7 +109,7 @@ class TestS3FileFormatETL(unittest.TestCase):
             input_filename=inputfile_mock,
             source_bucket=source_bucket_mock,
             destination_bucket=destination_bucket_mock,
-            season_year=season_year
+            season=season
         )
         # test given open mock
         patches = {
@@ -158,7 +158,7 @@ class TestS3FileFormatETL(unittest.TestCase):
         inputfile_mock = 'somefile.7z'
         source_bucket_mock = 'nba-player-positions'
         destination_bucket_mock = 'nba-game-info'
-        season_year = '2015-2016'
+        season = '2015-2016'
 
         # function input mocks
         tablename = 'sometable'
@@ -179,7 +179,7 @@ class TestS3FileFormatETL(unittest.TestCase):
             input_filename=inputfile_mock,
             source_bucket=source_bucket_mock,
             destination_bucket=destination_bucket_mock,
-            season_year=season_year
+            season=season
         )
         etl.tmp_dir = tempfile_mock.mkdtemp.return_value
         etl.gameid = data['gameid']
@@ -209,7 +209,7 @@ class TestS3FileFormatETL(unittest.TestCase):
     def test_load(self):
         # etl input
         destination_bucket = 'nba-game-info-test'
-        season_year = '2015-2016'
+        season = '2015-2016'
         gameid = '1234'
 
         # _load input
@@ -225,7 +225,7 @@ class TestS3FileFormatETL(unittest.TestCase):
                 input_filename=filename,
                 source_bucket='nba-player-positions-test',
                 destination_bucket=destination_bucket,
-                season_year=season_year
+                season=season
             )        
             # update some attributes
             etl.gameid = gameid
@@ -237,7 +237,7 @@ class TestS3FileFormatETL(unittest.TestCase):
 
         key = '{}/season={}/gameid={}/{}.parquet.snappy'.format(
             tablename,
-            season_year,
+            season,
             gameid,
             os.path.basename(filename)
         )
@@ -250,7 +250,7 @@ class TestS3FileFormatETL(unittest.TestCase):
             input_filename='somefile.7z',
             source_bucket='nba-player-positions',
             destination_bucket='nba-game-info',
-            season_year='2015-2016'
+            season='2015-2016'
         )
         # mock functions
         get_game_info_mock = mock.Mock()
@@ -303,7 +303,7 @@ class TestS3FileFormatETL(unittest.TestCase):
             input_filename='somefile.7z',
             source_bucket='nba-player-positions',
             destination_bucket='nba-game-info',
-            season_year='2015-2016'
+            season='2015-2016'
         )
         load_mock = mock.Mock()
         etl._load = load_mock
@@ -326,7 +326,7 @@ class TestS3FileFormatETL(unittest.TestCase):
             input_filename='somefile.7z',
             source_bucket='nba-player-positions-test',
             destination_bucket='nba-game-info-test',
-            season_year='2015-2016'
+            season='2015-2016'
         )
         # update some attributes
         etl.tmp_dir = '/tmp/somedir'
@@ -369,7 +369,7 @@ class TestS3FileFormatETL(unittest.TestCase):
                 input_filename='somefile.7z',
                 source_bucket='nba-player-positions-test',
                 destination_bucket='nba-game-info-test',
-                season_year='2015-2016'
+                season='2015-2016'
             )
             etl.metadata = metadata_mock
             etl.extract_from_s3 = extract_mock
@@ -408,7 +408,7 @@ class TestTransformUploadAll(unittest.TestCase):
 
     def test_tranform_upload_all_games(self):
         # input parameters
-        season_year = '2015-2016'
+        season = '2015-2016'
         all_files = ['file1.7z', 'file2.7z', 'file3.7z']
         idx = [1, 2]
         source_bucket = 'nba-position-data-test'
@@ -422,7 +422,7 @@ class TestTransformUploadAll(unittest.TestCase):
         path = 'triple_triple_etl.load.storage.s37z_to_s3parquet.S3FileFormatETL'
         with mock.patch(path, S3FileFormatETL_mock):
             transform_upload_all_games(
-                season_year=season_year,
+                season=season,
                 all_files=all_files,
                 idx=idx,
                 source_bucket=source_bucket,
