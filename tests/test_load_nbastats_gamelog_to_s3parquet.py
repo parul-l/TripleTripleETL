@@ -146,15 +146,21 @@ class TestNBAStatsGameLogsS3ETL(unittest.TestCase):
     def test_load(self):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket('nba-game-info')
-        bucket.create()
+        output_7z = io.BytesIO(b'some contents and stuff')
 
-        etl = NBAStatsGameLogsS3ETL(
-            datefrom='01/23/2016',
-            dateto='03/23/2016',
-            season_year='2015-2016',
-            destination_bucket='nba-game-info',
+        bucket.create()
+        bucket.upload_fileobj(
+            Fileobj=output_7z,
+            Key='some file'
         )
 
+        # etl = NBAStatsGameLogsS3ETL(
+        #     datefrom='01/23/2016',
+        #     dateto='03/23/2016',
+        #     season_year='2015-2016',
+        #     destination_bucket='nba-game-info',
+        # )
+        # etl.load()
     # TODO: How to test this function
 
 
