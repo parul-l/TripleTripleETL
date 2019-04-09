@@ -3,6 +3,7 @@ import requests
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 
 from triple_triple_etl.log import get_logger
 from triple_triple_etl.constants import DATATABLES_DIR
@@ -13,8 +14,10 @@ logger = get_logger()
 # TODO: get_team_info: get start/end date of teams and conference, division, city, state
 
 
-def get_player_info(game_data_dict: dict):
+def get_player_info(game_data_dict: dict, season: str = '2015-2016'):
     col_order = [
+        'season',
+        'gameid',
         'playerid',
         'firstname',
         'lastname',
@@ -39,14 +42,37 @@ def get_player_info(game_data_dict: dict):
     # combine home/visitor dataframes
     df = pd.concat(player_dfs, axis=0)
     # add start/end_date columns
-    df['startdate'] = datetime.strptime('1970-01-01', '%Y-%M-%d')
-    df['enddate'] = datetime.strptime('1970-01-01', '%Y-%M-%d')
+    df['startdate'] = '1970-01-01'
+    df['enddate'] = '1970-01-01'
 
-    return df[col_order]
+    # add gameid and season
+    df['gameid'] = game_data_dict['gameid']
+    df['season'] = season
+
+    # enforce dtype
+    dtype = {
+        'season': 'object',
+        'gameid': 'object',
+        'playerid': 'int64',
+        'firstname': 'object',
+        'lastname': 'object',
+        'teamid': 'int64',
+        'position': 'object',
+        'jersey': 'object',
+        'startdate': 'object',
+        'enddate': 'object',
+    }
+
+    df = df.astype(dtype)
+
+    # convert to pyarrow table
+    return pa.Table.from_pandas(df[col_order], preserve_index=False)
 
 
-def get_team_info(game_data_dict: dict):
+def get_team_info(game_data_dict: dict, season: str = '2015-2016'):
     col_order = [
+        'season',
+        'gameid',
         'teamid',
         'name',
         'conference',
@@ -65,20 +91,42 @@ def get_team_info(game_data_dict: dict):
         team_data.append([
             team_id,
             name,
-            datetime.strptime('1970-01-01', '%Y-%M-%d'),
-            datetime.strptime('1970-01-01', '%Y-%M-%d'),
+            '1970-01-01',
+            '1970-01-01'
         ])
 
     df = pd.concat([
-        pd.DataFrame(data=team_data, columns=np.array(col_order)[[0, 1, -2, -1]]),
-        pd.DataFrame(columns=col_order[2:6]) # adding null info for now
+        pd.DataFrame(data=team_data, columns=np.array(col_order[2:])[[0, 1, -2, -1]]),
+        pd.DataFrame(columns=col_order[4:8]) # adding null info for now
     ], axis=1)
 
-    return df[col_order]
+    # add gameid and season
+    df['gameid'] = game_data_dict['gameid']
+    df['season'] = season
+
+    # enforce dtypes
+    dtype = {
+        'season': 'object',
+        'gameid': 'object',
+        'teamid': 'int64',
+        'name': 'object',
+        'conference': 'object',
+        'division': 'object',
+        'city': 'object',
+        'state': 'object',
+        'startdate': 'object',
+        'enddate': 'object'
+    }
+    df = df.astype(dtype)
+
+    # convert to pyarrow table
+    return pa.Table.from_pandas(df[col_order], preserve_index=False)
 
 
-def get_game_info(game_data_dict: dict):
+
+def get_game_info(game_data_dict: dict, season: str = '2015-2016'):
     col_order = [
+        'season',
         'gameid', 
         'gamedate', 
         'home_teamid', 
@@ -86,20 +134,34 @@ def get_game_info(game_data_dict: dict):
     ]
     logger.info('Getting game info data')
     df = pd.DataFrame.from_dict([{
+        'season': season,
         'gameid': game_data_dict['gameid'],
-        'gamedate': datetime.strptime(game_data_dict['gamedate'], '%Y-%m-%d'),
+        'gamedate': game_data_dict['gamedate'], # leave date as string for athena queries
         'home_teamid': game_data_dict['events'][0]['home']['teamid'],
         'visitor_teamid': game_data_dict['events'][0]['visitor']['teamid']
     }])
 
-    return df[col_order]
+    # enforce dtype
+    dtype = {
+        'season': 'object',
+        'gameid': 'object', 
+        'gamedate': 'object', 
+        'home_teamid': 'int64', 
+        'visitor_teamid': 'int64'
+    }
+    df = df.astype(dtype)
+
+    # convert to pyarrow table
+    return pa.Table.from_pandas(df[col_order], preserve_index=False)
 
 
-def get_game_position_info(game_data_dict: dict):
+def get_game_position_info(game_data_dict: dict, season: str = '2015-2016'):
     col_order = [
+        'season',
         'gameid',
         'eventid',
-        'timestamp',
+        'timestamp_dts',
+        'timestamp_utc',
         'period',
         'periodclock',
         'shotclock',
@@ -119,14 +181,16 @@ def get_game_position_info(game_data_dict: dict):
         for moment in moments:
             # moment info
             period = moment[0]
-            timestamp = datetime.fromtimestamp(moment[1] / 1000.)
+            timestamp_dts = datetime.fromtimestamp(moment[1] / 1000.).strftime('%F %TZ')
+            timestamp_utc = moment[1]
             periodclock = moment[2]
             shotclock = moment[3]
 
             moment_data = [
                 gameid, 
                 eventid, 
-                timestamp, 
+                timestamp_dts,
+                timestamp_utc, 
                 period, 
                 periodclock, 
                 shotclock
@@ -134,4 +198,26 @@ def get_game_position_info(game_data_dict: dict):
             # add moment data to player position for given moment
             for player_data in moment[5]:
                 player_position_data.append(moment_data + player_data)
-    return pd.DataFrame(data=player_position_data, columns=col_order)
+    df = pd.DataFrame(data=player_position_data, columns=col_order[1:])
+    # add season
+    df['season'] = season
+
+    # enforce datatype
+    dtype = {
+        'season': 'object',
+        'gameid': 'object',
+        'eventid': 'int64',
+        'timestamp_dts': 'object',
+        'timestamp_utc': 'int64',
+        'period': 'int64',
+        'periodclock': 'float64',
+        'shotclock': 'float64',
+        'teamid': 'int64',
+        'playerid': 'int64',
+        'x_coordinate': 'float64',
+        'y_coordinate': 'float64',
+        'z_coordinate': 'float64'
+    }
+    df = df.astype(dtype)
+    # convert to pyarrow table
+    return pa.Table.from_pandas(df[col_order], preserve_index=False)

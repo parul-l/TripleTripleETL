@@ -1,13 +1,12 @@
 import io
 import os
-import pandas as pd
 import unittest
 
 import boto3
 import moto
 
 from triple_triple_etl.core.s3 import get_game_files, s3download
-from triple_triple_etl.constants import META_DIR
+
 
 class TestS3(unittest.TestCase):
     """Tests for s3.py"""
@@ -20,25 +19,10 @@ class TestS3(unittest.TestCase):
         bucket = s3.Bucket('fake-bucket')
 
         bucket.create()
-        bucket.upload_fileobj(
-            Fileobj=output_7z,
-            Key='somestuff/rawdata/01.01.2016.someotherstuff'
-        )
+        bucket.upload_fileobj(Fileobj=output_7z, Key='something.7z')
         bucket.upload_fileobj(Fileobj=output_txt, Key='something.txt')
 
-        get_game_files(bucket_name='fake-bucket', save_name='test_get_game_files')
-        # check that file exists
-        filepath = os.path.join(META_DIR, 'test_get_game_files')
-        self.assertTrue(os.path.isfile(filepath))
-
-        # remove the test file
-        os.remove(filepath)
-
-
-        # self.assertEqual(
-        #     first=get_game_files(bucket_name='fake-bucket'),
-        #     second=['somestuff/rawdata/01.01.2016.someotherstuff']
-        # )
+        assert (get_game_files(bucket_name='fake-bucket') == ['something.7z'])
 
     @moto.mock_s3
     def test_s3download(self):
