@@ -4,6 +4,7 @@ import unittest
 from triple_triple_etl.load.storage.load_helper import get_uploaded_metadata
 from triple_triple_etl.constants import META_DIR
 
+
 class TestUploadedMetaData(unittest.TestCase):
     """Tests for get_uploaded_metadata() from s37z_to_s3parquet.py """
     def test_filepath_exists(self): 
