@@ -14,3 +14,7 @@
         - boxscore_player
         - boxscore_traditional
     - stored as parquet files on s3
+
+
+
+[![CircleCI](https://circleci.com/gh/parul-l/TripleTripleETL.svg?style=svg)](https://circleci.com/gh/parul-l/TripleTripleETL)
