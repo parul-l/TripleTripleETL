@@ -12,7 +12,7 @@ from triple_triple_etl.constants import META_DIR
 class TestS3(unittest.TestCase):
     """Tests for s3.py"""
     
-    @unittest.skiptest('circleci expecting aws credentials')
+    @unittest.skip('circleci expecting aws credentials')
     @moto.mock_s3
     def test_s3_get_game_files(self):
 
@@ -43,7 +43,7 @@ class TestS3(unittest.TestCase):
         #     second=['somestuff/rawdata/01.01.2016.someotherstuff']
         # )
 
-    @unittest.skiptest('circleci expecting aws credentials')
+    @unittest.skip('circleci expecting aws credentials')
     @moto.mock_s3
     def test_s3download(self):
         s3 = boto3.resource('s3')
