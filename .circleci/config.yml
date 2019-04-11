@@ -49,7 +49,7 @@ jobs:
           command: |
             . venv/bin/activate
             # python manage.py test
-            nosetests -v tests/
+            nosetests tests/ -v --with-coverage --cover-package=triple_triple
 
       - store_artifacts:
           path: test-reports
