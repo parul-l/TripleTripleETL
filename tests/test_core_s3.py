@@ -52,7 +52,7 @@ class TestS3(unittest.TestCase):
         with open(path, 'r') as a_file:
             contents = a_file.read()
 
-        assert contents == output
+        assert contents == 'some contents and stuff'
         if os.path.exists(path):
             os.remove(path)
 
