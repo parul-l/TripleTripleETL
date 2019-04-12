@@ -169,7 +169,7 @@ class TestNBAStatsS3ETL(unittest.TestCase):
         get_boxscore_mock.assert_has_calls(expected_calls, any_order=False)        
         self.assertEqual(pq_mock.write_to_dataset.call_count, 2)
 
-    @unittest.skip('circleci expecting aws credentials')
+
     @moto.mock_s3
     def test_load(self):
         s3 = boto3.resource('s3')

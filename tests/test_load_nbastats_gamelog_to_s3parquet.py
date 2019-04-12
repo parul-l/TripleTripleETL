@@ -142,7 +142,6 @@ class TestNBAStatsGameLogsS3ETL(unittest.TestCase):
         # remove created dir
         shutil.rmtree(season_dir)
 
-    @unittest.skip('circleci expecting aws credentials')
     @moto.mock_s3
     def test_load(self):
         s3 = boto3.resource('s3')
