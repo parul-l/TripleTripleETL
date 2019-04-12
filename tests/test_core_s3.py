@@ -12,16 +12,16 @@ from triple_triple_etl.constants import META_DIR
 class TestS3(unittest.TestCase):
     """Tests for s3.py"""
     
-    @unittest.skip('circleci expecting aws credentials')
+    # @unittest.skip('circleci expecting aws credentials')
     @moto.mock_s3
     def test_s3_get_game_files(self):
-
-        s3 = boto3.resource('s3')
+    
+        s3 = boto3.resource('s3', region_name='us-east-1')
 
         output_7z = io.BytesIO(b'some contents and stuff')
         output_txt = io.BytesIO(b'some contents and stuff')
-        bucket = s3.Bucket('fake-bucket')
 
+        bucket = s3.Bucket('fake-bucket')
         bucket.create()
         bucket.upload_fileobj(
             Fileobj=output_7z,
@@ -43,24 +43,24 @@ class TestS3(unittest.TestCase):
         #     second=['somestuff/rawdata/01.01.2016.someotherstuff']
         # )
 
-    @unittest.skip('circleci expecting aws credentials')
-    @moto.mock_s3
-    def test_s3download(self):
-        s3 = boto3.resource('s3')
+    # @unittest.skip('circleci expecting aws credentials')
+    # @moto.mock_s3
+    # def test_s3download(self):
+    #     s3 = boto3.resource('s3')
 
-        output = io.BytesIO(b'some contents and stuff')
-        bucket = s3.Bucket('fake-bucket')
+    #     output = io.BytesIO(b'some contents and stuff')
+    #     bucket = s3.Bucket('fake-bucket')
 
-        bucket.create()
-        bucket.upload_fileobj(Fileobj=output, Key='something.7z')
+    #     bucket.create()
+    #     bucket.upload_fileobj(Fileobj=output, Key='something.7z')
 
-        path = s3download(bucket_name='fake-bucket', filename='something.7z')
-        with open(path, 'r') as a_file:
-            contents = a_file.read()
+    #     path = s3download(bucket_name='fake-bucket', filename='something.7z')
+    #     with open(path, 'r') as a_file:
+    #         contents = a_file.read()
 
-        assert contents == 'some contents and stuff'
-        if os.path.exists(path):
-            os.remove(path)
+    #     assert contents == output
+    #     if os.path.exists(path):
+    #         os.remove(path)
 
     def test_extract2dir(self):
         # create a file path
