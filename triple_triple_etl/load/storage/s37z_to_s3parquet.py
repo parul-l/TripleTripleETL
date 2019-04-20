@@ -70,6 +70,7 @@ class S3FileFormatETL(object):
         # meta data df columns
         columns = [
             'input_filename',
+            'gameid',
             'gameinfo_uploadedFLG',
             'gameposition_uploadedFLG',
             'playerinfo_uploadedFLG',
@@ -88,7 +89,7 @@ class S3FileFormatETL(object):
 
         # add row to df_uploaded if file DNE (ie file_idx == len(df_uploaded))
         if self.file_idx == self.df_uploaded.shape[0]:
-            self.df_uploaded.loc[self.file_idx] = [self.input_filename] + [np.nan] * 5
+            self.df_uploaded.loc[self.file_idx] = [self.input_filename] + [np.nan] * (len(columns) - 1)
 
     def extract_from_s3(self):
         filepath = s3download(
@@ -219,9 +220,12 @@ class S3FileFormatETL(object):
         # remove tmp directory
         logger.info('Removing temporary directory')
         shutil.rmtree(self.tmp_dir)
+
         # update the uploadDTS stamp
         today = datetime.datetime.utcnow().strftime('%F %TZ')
         self.df_uploaded.loc[self.file_idx, 'lastuploadDTS'] = today
+        # update gameid
+        self.df_uploaded.loc[self.file_idx, 'gameid'] = self.gameid
         # save df_uploaded
         self.df_uploaded.to_parquet(fname=self.uploaded_filepath, compression='snappy')
 
