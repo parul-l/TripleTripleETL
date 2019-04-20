@@ -2,8 +2,7 @@ import os
 import pandas as pd
 from triple_triple_etl.constants import META_DIR
 from triple_triple_etl.load.storage.s37z_to_s3parquet import (
-    transform_upload_all_games,
-    S3FileFormatETL
+    transform_upload_all_games
 )
 
 
@@ -16,7 +15,7 @@ if __name__ == '__main__':
     )
 
     transform_upload_all_games(
-        season_year='2015-2016',
+        season='2015-2016',
         all_files=df_all_files.filename
     )
 
