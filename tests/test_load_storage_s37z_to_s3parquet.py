@@ -329,17 +329,27 @@ class TestS3FileFormatETL(unittest.TestCase):
         # update some attributes
         etl.tmp_dir = '/tmp/somedir'
         etl.df_uploaded = copy.deepcopy(mock_df_uploaded)
-        etl.uploaded_filepath = os.path.join(
+        tmp_filepath = os.path.join(
             TEST_DIR,
             'test_tmp',
             's37z_s3parquet_cleanup.parquet'
         )
+        etl.uploaded_filepath = tmp_filepath
         etl.file_idx = 1
 
         path = 'triple_triple_etl.load.storage.s37z_to_s3parquet.shutil'
         with mock.patch(path, mock.Mock()) as s:
             etl.cleanup()
             s.rmtree.assert_called_once_with(etl.tmp_dir)
+            
+            # check file exists
+            self.assertTrue(os.path.exists(tmp_filepath))
+
+        # remove the file created 's37z_s3parquet_cleanup.parquet'
+        try:
+            os.remove(tmp_filepath)
+        except OSError:
+            pass
 
     def test_run(self):
         # etl mock functions
