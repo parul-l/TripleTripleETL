@@ -158,6 +158,7 @@ class TestS3Json2Df(unittest.TestCase):
                 'season',
                 'gameid',
                 'eventid',
+                'moment_num',
                 'timestamp_dts',
                 'timestamp_utc',
                 'period',
@@ -173,6 +174,7 @@ class TestS3Json2Df(unittest.TestCase):
         # column types are accurate
         col_num = [
             'eventid',
+            'moment_num',
             'period',
             'periodclock',
             'shotclock',

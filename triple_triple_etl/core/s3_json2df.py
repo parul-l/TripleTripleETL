@@ -160,6 +160,7 @@ def get_game_position_info(game_data_dict: dict, season: str = '2015-2016'):
         'season',
         'gameid',
         'eventid',
+        'moment_num',
         'timestamp_dts',
         'timestamp_utc',
         'period',
@@ -178,7 +179,7 @@ def get_game_position_info(game_data_dict: dict, season: str = '2015-2016'):
     for event in game_data_dict['events']:
         eventid = int(event['eventId'])
         moments = event['moments']
-        for moment in moments:
+        for moment_num, moment in enumerate(moments):
             # moment info
             period = moment[0]
             timestamp_dts = datetime.fromtimestamp(moment[1] / 1000.).strftime('%F %TZ')
@@ -188,7 +189,8 @@ def get_game_position_info(game_data_dict: dict, season: str = '2015-2016'):
 
             moment_data = [
                 gameid, 
-                eventid, 
+                eventid,
+                moment_num,
                 timestamp_dts,
                 timestamp_utc, 
                 period, 
@@ -207,6 +209,7 @@ def get_game_position_info(game_data_dict: dict, season: str = '2015-2016'):
         'season': 'object',
         'gameid': 'object',
         'eventid': 'int64',
+        'moment_num': 'int64',
         'timestamp_dts': 'object',
         'timestamp_utc': 'int64',
         'period': 'int64',
