@@ -329,7 +329,11 @@ class TestS3FileFormatETL(unittest.TestCase):
         # update some attributes
         etl.tmp_dir = '/tmp/somedir'
         etl.df_uploaded = copy.deepcopy(mock_df_uploaded)
-        etl.uploaded_filepath = os.path.join(TEST_DIR, 's37z_s3parquet_cleanup.parquet')
+        etl.uploaded_filepath = os.path.join(
+            TEST_DIR,
+            'test_tmp',
+            's37z_s3parquet_cleanup.parquet'
+        )
         etl.file_idx = 1
 
         path = 'triple_triple_etl.load.storage.s37z_to_s3parquet.shutil'
