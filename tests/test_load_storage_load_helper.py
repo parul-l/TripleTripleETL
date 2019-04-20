@@ -11,6 +11,7 @@ class TestUploadedMetaData(unittest.TestCase):
         filename = 'rawpositiontransformed_s3uploaded.parquet.snappy'
         columns = [
             'input_filename',
+            'gameid',
             'gameinfo_uploadedFLG',
             'gameposition_uploadedFLG',
             'playerinfo_uploadedFLG',
@@ -28,6 +29,7 @@ class TestUploadedMetaData(unittest.TestCase):
         file_mock = 'somefile'
         columns = [
             'input_filename',
+            'gameid',
             'gameinfo_uploadedFLG',
             'gameposition_uploadedFLG',
             'playerinfo_uploadedFLG',
@@ -41,6 +43,7 @@ class TestUploadedMetaData(unittest.TestCase):
             first=set(df.columns),
             second={
                 'input_filename',
+                'gameid',
                 'gameinfo_uploadedFLG',
                 'gameposition_uploadedFLG',
                 'playerinfo_uploadedFLG',
