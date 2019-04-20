@@ -128,9 +128,13 @@ class TestNBAStatsGameLogsS3ETL(unittest.TestCase):
         etl.transform(mock_gamelog_data)
 
         # check files/dir as expected
+        dirs_in_tmp = [
+            d for d in os.listdir(etl.tmp_dir) if
+            os.path.isdir(os.path.join(etl.tmp_dir, d))
+        ]
         # check season
         self.assertEqual(
-            first=set(os.listdir(etl.tmp_dir)),
+            first=set(dirs_in_tmp),
             second={'season={}'.format(etl.season_year)}
         )
         # check games
