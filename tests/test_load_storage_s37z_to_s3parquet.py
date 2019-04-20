@@ -14,7 +14,7 @@ from triple_triple_etl.load.storage.s37z_to_s3parquet import (
     S3FileFormatETL,
     transform_upload_all_games
 )
-from triple_triple_etl.constants import META_DIR
+from triple_triple_etl.constants import META_DIR, TEST_DIR
 
 
 class TestFileIdx(unittest.TestCase):
@@ -257,7 +257,6 @@ class TestS3FileFormatETL(unittest.TestCase):
         get_team_info_mock = mock.Mock()
         get_game_position_info_mock = mock.Mock()
         transform_mock = mock.Mock()
-        
 
         patches = {
             'get_game_info': get_game_info_mock,
@@ -330,6 +329,7 @@ class TestS3FileFormatETL(unittest.TestCase):
         # update some attributes
         etl.tmp_dir = '/tmp/somedir'
         etl.df_uploaded = copy.deepcopy(mock_df_uploaded)
+        etl.uploaded_filepath = os.path.join(TEST_DIR, 's37z_s3parquet_cleanup.parquet')
         etl.file_idx = 1
 
         path = 'triple_triple_etl.load.storage.s37z_to_s3parquet.shutil'
