@@ -20,8 +20,9 @@ idna==2.8
 ipython==6.2.1
 ipython-genutils==0.2.0
 jedi==0.11.0
-Jinja2==2.10
+Jinja2==2.10.1
 jmespath==0.9.3
+JPype1==0.6.3
 jsondiff==1.1.1
 jsonpickle==1.1
 MarkupSafe==1.1.0
