@@ -39,3 +39,6 @@ SOURCE_BUCKET = config['s3']['source_bucket']
 
 # s3 destination info
 DESTINATION_BUCKET = config['s3']['destination_bucket']
+
+# athena queries output
+ATHENA_OUTPUT = config['athena']['query_output']
