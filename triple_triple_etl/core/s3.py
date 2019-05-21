@@ -81,4 +81,4 @@ def extract2dir(filepath: str, directory: str = DATASETS_DIR):
     except FileNotFoundError as err:
         logger.error(err)
         raise
-    
+
