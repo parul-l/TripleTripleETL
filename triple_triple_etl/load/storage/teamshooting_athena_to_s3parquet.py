@@ -207,8 +207,7 @@ class TeamShootingSideALL(object):
         # etl end time
         end_time = datetime.datetime.utcnow()
         time_delta = round((end_time - start_time).seconds / 60., 2)
-        msg = 'It took {} minutes to get gamelogs from {} to {}'\
-               .format(time_delta, self.datefrom, self.dateto)
+        msg = 'It took {} minutes to load all data.'.format(time_delta)
         logger.info(msg)
 
 
@@ -375,7 +374,7 @@ class TeamShootingSideETL(object):
         # etl end time
         end_time = datetime.datetime.utcnow()
         time_delta = round((end_time - start_time).seconds / 60., 2)
-        msg = 'It took {} minutes to get gamelogs from {} to {}'\
-               .format(time_delta, self.datefrom, self.dateto)
+        msg = 'It took {} minutes to load game {}.'\
+               .format(time_delta, self.gameid)
         logger.info(msg)
 

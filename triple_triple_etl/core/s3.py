@@ -1,4 +1,9 @@
+# TODO: Re-work so that I'm only using boto3.client or boto3.resource
+# Currently using both
+# TODO: Fix logging output for boto3. Logs output to this file s3.py
+
 import datetime
+import logging
 import os
 import pandas as pd
 import re
@@ -10,8 +15,14 @@ import patoolib
 from triple_triple_etl.constants import DATASETS_DIR, META_DIR, LOGS_DIR
 from triple_triple_etl.log import get_logger
 
-logger = get_logger(output_file=os.path.join(LOGS_DIR, __file__))
+# THIS_FILENAME = os.path.splitext(os.path.basename(__file__))[0]
+# LOG_FILENAME = '{}.log'.format(os.path.splitext(THIS_FILENAME)[0])
+# logger = get_logger(output_file=T)
+logger = logging.getLogger()
+logger.setLevel('INFO')
+
 s3 = boto3.resource('s3')
+s3client = boto3.client('s3')
 REGEX = re.compile("(.+/rawdata/)(\d.+\d.)([a-zA-Z])")
 
 
@@ -35,6 +46,35 @@ def get_game_files(bucket_name: str, save_name: str):
     # save the data
     df_all_files.to_parquet(os.path.join(META_DIR, save_name))
     
+
+def get_s3_subfolders(bucket_name: str, prefix: str):
+    """
+    This function returns the elements ('subfolders) in the given `bucket_name`
+    with keys beginning with the given `prefix`.
+
+    Parameters
+    ----------
+    bucket_name: `str`
+        The s3 bucket name containing the data
+    
+    prefix: `str`
+        The full key prefix, ending in '/'.
+        Example: 'gameposition/season=2015-2016/'
+
+    Returns
+    ------
+    A list of dictionaries. Each dictionary has key 'Prefix'
+    and value equal to the `prefix` + subfolder.
+    Example: 'gameposition/season=2015-2016/gameid=0021500663/'
+
+    """
+    response = s3client.list_objects(
+        Bucket=bucket_name,
+        Prefix=prefix,
+        Delimiter='/'
+    )
+
+    return response.get('CommonPrefixes')
 
 
 def rename_game_files(bucket_name: str):

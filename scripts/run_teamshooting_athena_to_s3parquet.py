@@ -4,7 +4,7 @@ from triple_triple_etl.load.storage.teamshooting_athena_to_s3parquet import (
 )
 
 
-if __main__ == '__name__':
+if __name__ == '__main__':
     # all games on gamelog
     etl = TeamShootingSideALL()
     etl.run()
