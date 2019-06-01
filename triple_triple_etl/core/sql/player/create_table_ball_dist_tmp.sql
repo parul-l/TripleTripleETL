@@ -1,7 +1,7 @@
 CREATE TABLE ball_dist_tmp WITH (
     external_location = 's3://nba-game-info/ball_dist_tmp',
     format = 'PARQUET',
-    partitioned_by = ARRAY['season', 'game'],
+    partitioned_by = ARRAY['season', 'gameid'],
     parquet_compression = 'SNAPPY'
 ) AS (
     SELECT 

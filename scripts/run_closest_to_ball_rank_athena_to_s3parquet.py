@@ -1,6 +1,6 @@
 import numpy as np
 
-from triple_triple_etl.core.s3 import get_s3_subfolders
+from triple_triple_etl.core.s3 import get_bucket_content
 from triple_triple_etl.load.storage.closest_to_ball_rank_athena_to_s3parquet import (
     ClosestToBallETL,
     run_all_closest_to_ball
@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     gameposition_gameids = [
         x['Prefix'].split('gameid=')[1][:-1]
-        for x in get_s3_subfolders(bucket_name, prefix)
+        for x in get_bucket_content(bucket_name, prefix)
     ]
 
 

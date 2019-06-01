@@ -47,7 +47,8 @@ def get_game_files(bucket_name: str, save_name: str):
     df_all_files.to_parquet(os.path.join(META_DIR, save_name))
     
 
-def get_s3_subfolders(bucket_name: str, prefix: str):
+
+def get_bucket_content(bucket_name: str, prefix: str, delimiter: str = '/'):
     """
     This function returns the elements ('subfolders) in the given `bucket_name`
     with keys beginning with the given `prefix`.
@@ -60,6 +61,10 @@ def get_s3_subfolders(bucket_name: str, prefix: str):
     prefix: `str`
         The full key prefix, ending in '/'.
         Example: 'gameposition/season=2015-2016/'
+    
+    delimeter: `str`
+        For 'subfolders', use '/'.
+        For all 'files', use ''.
 
     Returns
     ------
@@ -71,11 +76,78 @@ def get_s3_subfolders(bucket_name: str, prefix: str):
     response = s3client.list_objects(
         Bucket=bucket_name,
         Prefix=prefix,
-        Delimiter='/'
+        Delimiter=delimiter
     )
 
-    return response.get('CommonPrefixes')
+    if delimiter == '/':
+        # returns 'subfolders'
+        return response.get('CommonPrefixes')
+    elif delimiter == '':
+        # returns all 'files'
+        return [file['Key'] for file in response['Contents']]
 
+
+def check_key_exists(bucket: str, key: str, s3client, max_time: int = 0):
+    response = s3client.list_objects(Bucket=bucket, Prefix=key).get('Contents')
+    time_to_appear = 0
+    
+    while not response and time_to_appear <= max_time:
+        time_increment = 1
+        time.sleep(time_increment)
+        response = s3client.list_objects(Bucket=bucket, Prefix=key).get('Contents')
+        time_to_appear += time_increment
+    
+    if response:
+        logger.info('It took {} seconds for the object to appear'.format(time_to_appear))
+        return 1
+    else:
+        logger.info('Object did not appear in the max time of {} seconds'.format(max_time))
+        return 0
+
+
+def copy_bucket_contents(
+        copy_source_keys: list, # list of all files to move
+        destination_bucket: str,
+        destination_folder: str,
+        s3client
+):
+    for file in copy_source_keys:
+        copy_params = {'Bucket': destination_bucket, 'Key': file}
+        destination_suffix = '/'.join(file.split('/')[1:]) # removes source_folder
+        destination_key = '{}/{}'.format(destination_folder, destination_suffix)
+
+        # copy object in to destination    
+        s3client.copy_object(
+            Bucket=destination_bucket,
+            CopySource=copy_params,
+            Key=destination_key
+        )
+
+def remove_bucket_contents(
+        bucket: str,
+        key: str,
+        max_time: int,
+        s3client
+):
+
+    # check object is there 
+    is_key_there = check_key_exists(
+        bucket=bucket,
+        key=key,
+        s3client=s3client, 
+        max_time=max_time
+    )
+    if is_key_there:
+        # delete object from source
+        s3client.delete_object(
+            Bucket=destination_bucket,
+            Key=destination_key
+        )
+    else:
+        # log the error
+        logger.error('{} file did not copy in {} time'.format(key, max_time))
+
+    return is_key_there        
 
 def rename_game_files(bucket_name: str):
     # restructuring "folder" structure

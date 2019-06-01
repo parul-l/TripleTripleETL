@@ -11,6 +11,10 @@ import time
 
 from triple_triple_etl.constants import ATHENA_OUTPUT, META_DIR, SQL_DIR 
 from triple_triple_etl.core.athena import execute_athena_query
+from triple_triple_etl.core.s3 import (
+    copy_bucket_contents,
+    remove_bucket_contents
+)
 from triple_triple_etl.load.storage.load_helper import get_uploaded_metadata
 from triple_triple_etl.log import get_logger
 
@@ -23,46 +27,38 @@ LOG_FILENAME = '{}.log'.format(os.path.splitext(THIS_FILENAME)[0])
 logger = get_logger(output_file=LOG_FILENAME)
 
 
-
-def create_tmp_tables(
-        query: str,
-        table: str,
-        gameid_bounds: list,
-        athena
+def get_file_idx_in_uploaded(
+        gameid: str,
+        df_uploaded: pd.DataFrame
 ):
-    """
-        This function executes a query and stores it in the
-        default athena query folder in s3.
-    
-    Parameters
-    ----------
-        query: `str`
-            The sql query desired to be executed
-        table: `str`
-            Either 'ball_dist' or 'closest_to_ball' 
-        gameid_bounds: `list`
-            A list with the lower and upper bounds of the 
-            gameids included in the query
-        athena: The boto3 athena client `boto3.client('athena')`
-        
-    
-    Returns
-    -------
-    A `str` of the s3 key where the executed query is stored.
-    """
-    output_filename = '{}_gameids_{}_to_{}'.format(
-        table,
-        gameid_bounds[0],
-        gameid_bounds[1]
+    # get index if file exists or create a row with that gameid
+    try:
+        return df_uploaded.query('gameid == @gameid').index[0]
+    except:
+        return df_uploaded.shape[0]
+
+
+def update_metadata(
+        df_uploaded: pd.DataFrame,
+        file: str,
+        uploadFLG: bool,
+        params: dict,
+):
+
+    # maybe use regular expression for this
+    season = [file for file in file.split('/') if 'season' in file][0].split('=')[1]
+    gameid = [file for file in file.split('/') if 'gameid' in file][0].split('=')[1]
+    today = datetime.datetime.utcnow().strftime('%F %TZ')
+
+    # gameid idx
+    file_idx = get_file_idx_in_uploaded(
+        df_uploaded=df_uploaded,
+        gameid=gameid
     )
-    response = execute_athena_query(
-        query=query, 
-        database='nba', 
-        boto3_client=athena,
-        output_filename=output_filename
-    )
-    # return s3key
-    return '{}/{}.csv'.format(output_filename, response['QueryExecutionId'])
+
+    # update and return df_uploaded
+    df_uploaded.loc[file_idx] = [season, gameid, params, uploadFLG, today]
+    return df_uploaded
 
 
 class ClosestToBallETL(object):
@@ -70,16 +66,24 @@ class ClosestToBallETL(object):
             self, 
             season: str,
             gameid_bounds: list,     #[lower_bound, upper_bound]
-            sql_filepath: str,
-            source_bucket: str = ATHENA_OUTPUT
+            source_bucket: str = ATHENA_OUTPUT,
+            destination_bucket: str = 'nba-game-info',
+            database: str = 'nba'
     ):
         self.season = season
         self.gameid_bounds = gameid_bounds
         self.source_bucket = source_bucket
+        self.destination_bucket = destination_bucket
+        self.database = database
         self.query_balldist = None
         self.query_closest_to_ball = None
+        self.s3keys = {}
+        self.df_uploaded = None
+        
+        metadata_filename = 'closest_to_ball.parquet.snappy'
+        self.uploaded_filepath = os.path.join(META_DIR, metadata_filename)
 
-
+    
     def get_queries(self, sql_path_balldist, sql_path_closest_to_ball):
         # ball_dist
         bal_dist_query_path = os.path.join(SQL_DIR, sql_path_balldist)
@@ -87,38 +91,126 @@ class ClosestToBallETL(object):
 
         with open(bal_dist_query_path) as f:
             self.query_balldist = f.read().format(
-                self.season
+                self.season,
                 self.gameid_bounds[0],
                 self.gameid_bounds[1]
             )
         with open(closest_to_ball_query_path) as f:
             self.query_closest_to_ball = f.read()
 
+    def create_tmp_tables(self):
+        tables = ['ball_dist', 'closest_to_ball']
+        queries = [self.query_balldist, self.query_closest_to_ball]
+    
+        for table, query in zip(tables, queries):
+            output_filename = '{}_gameids_{}_to_{}'.format(
+                table,
+                self.gameid_bounds[0],
+                self.gameid_bounds[1]
+            )
+    
+            self.s3keys['create_{}_tmp'.format(table)] = execute_athena_query(
+                query=query,
+                database=self.database,
+                output_filename=output_filename,
+                boto3_client=athena
+            )
+            # wait for table to appear max 5 min
+            table_exists = check_key_exists(
+                bucket=self.destination_bucket,
+                key=self.table,
+                s3client=s3client,
+                max_time=300 # 300 seconds = 5 min
+            )
+            if not table_exists:
+                raise FileNotFoundError('Table {} did not load'.format(table))
 
-    def create_ball_dist_tmp(self):
-        output_filename = 'ball_dist_gameids_{}_to_{}'.format(
-            self.gameid_bounds[0],
-            self.gameid_bounds[1]
+    def move_closest_to_ball_tmp_to_final(self):
+        all_files = get_bucket_content(
+            bucket_name=self.destination_bucket,
+            prefix='closest_to_ball_tmp',
+            delimiter=''
+        )    
+        # move closest_to_ball_tmp to closest_to_ball
+        copy_bucket_contents(
+            copy_source_keys=all_files,
+            destination_bucket=self.destination_bucket,
+            destination_folder='closest_to_ball',
+            s3client=s3client
         )
-        response = execute_athena_query(
-            query=self.query_balldist, 
-            database='nba', 
-            boto3_client=athena,
-            output_filename=output_filename
+
+        return all_files
+
+    def drop_tmp_tables(self):
+        tables = ['ball_dist_tmp', 'closest_to_ball_tmp']
+        
+        for table in tables:
+            query = "DROP TABLE IF EXISTS nba.{}".format(table)
+            # execute drop table query
+            self.s3keys['drop_{}'.format(table)] = execute_athena_query(
+                query=query,
+                database=self.database,
+                output_filename='drop_table_{}'.format(table),
+                boto3_client=athena
+            )
+
+    def cleanup(self):
+        # tmp files
+        keys_ball_dist_tmp = get_bucket_content(
+            bucket_name=self.destination_bucket,
+            prefix='ball_dist_tmp',
+            delimiter=''
         )
-        # return s3key
-        return '{}/{}.csv'.format(output_filename, response['QueryExecutionId'])
+        keys_closest_to_ball_tmp = get_bucket_content(
+            bucket_name=self.destination_bucket,
+            prefix='closest_to_ball_tmp',
+            delimiter=''
+        )    
+
+        # meta data of df columns
+        columns = ['season', 'gameid', 'params', 'uploadedFLG', 'lastuploadDTS']
+        self.df_uploaded = get_uploaded_metadata(
+            self.uploaded_filepath,
+            columns=columns
+        )
+
+        # delete tmp keys and update metadata
+        # (wait up to 60 sec to see if file has been moved to destination folder)
+
+        for file in (keys_ball_dist_tmp + keys_closest_to_ball_tmp):
+            is_key_there = remove_bucket_contents(
+                bucket=self.destination_bucket,
+                key=file,
+                max_time=60,
+                s3client=s3client
+            )
+        
+            self.df_uploaded = update_metadata(
+                df_uploaded=self.df_uploaded,
+                file=file,
+                uploadFLG=is_key_there,
+                params=self.s3keys
+            )
+    
+        self.df_uploaded.to_parquet(fname=self.uploaded_filepath, compression='snappy')
+  
+    def run(self):
+        self.get_queries(
+            sql_path_balldist='player/create_table_ball_dist_tmp.sql',
+            sql_path_closest_to_ball='player/create_table_closest_to_ball_tmp.sql'
+        )
+        self.create_tmp_tables()
+        all_files = self.move_closest_to_ball_tmp_to_final()
+        self.drop_tmp_tables()
+        self.cleanup(all_files)
 
 
-    def create closest_to_ball_tmp(self):
-        response = execute_athena_query(
-            query=self.query_closest_to_ball, 
-            database='nba', 
-            boto3_client=athena,
-            output_filename='gameids_{}_to_{}'.format(self.gameid_bounds[0], self.gameid_bounds[1])
-        )
-        # return s3key
-        return '
+
+
+
+
+        
+
 
 
 
