@@ -7,11 +7,15 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import shutil
 import tempfile
-import time
+
 
 from triple_triple_etl.constants import ATHENA_OUTPUT, META_DIR, SQL_DIR 
-from triple_triple_etl.core.athena import execute_athena_query
+from triple_triple_etl.core.athena import (
+    execute_athena_query,
+    check_table_exists
+)
 from triple_triple_etl.core.s3 import (
+    get_bucket_content,
     copy_bucket_contents,
     remove_bucket_contents
 )
@@ -65,7 +69,7 @@ class ClosestToBallETL(object):
     def __init__(
             self, 
             season: str,
-            gameid_bounds: list,     #[lower_bound, upper_bound]
+            gameid_bounds: list, # [lower_bound, upper_bound]
             source_bucket: str = ATHENA_OUTPUT,
             destination_bucket: str = 'nba-game-info',
             database: str = 'nba'
@@ -84,12 +88,18 @@ class ClosestToBallETL(object):
         self.uploaded_filepath = os.path.join(META_DIR, metadata_filename)
 
     
-    def get_queries(self, sql_path_balldist, sql_path_closest_to_ball):
+    def get_queries(
+            self,
+            sql_path_balldist='player/create_table_ball_dist_tmp.sql',
+            sql_path_closest_to_ball='player/create_table_closest_to_ball_tmp.sql'
+    ):
+        logger.info('Get queries for given gameids.')
+
         # ball_dist
-        bal_dist_query_path = os.path.join(SQL_DIR, sql_path_balldist)
+        ball_dist_query_path = os.path.join(SQL_DIR, sql_path_balldist)
         closest_to_ball_query_path = os.path.join(SQL_DIR, sql_path_closest_to_ball)
 
-        with open(bal_dist_query_path) as f:
+        with open(ball_dist_query_path) as f:
             self.query_balldist = f.read().format(
                 self.season,
                 self.gameid_bounds[0],
@@ -98,30 +108,36 @@ class ClosestToBallETL(object):
         with open(closest_to_ball_query_path) as f:
             self.query_closest_to_ball = f.read()
 
+
     def create_tmp_tables(self):
-        tables = ['ball_dist', 'closest_to_ball']
+        tables = ['ball_dist_tmp', 'closest_to_ball_tmp']
         queries = [self.query_balldist, self.query_closest_to_ball]
     
         for table, query in zip(tables, queries):
+            logger.info('Creating {} table'.format(table))
             output_filename = '{}_gameids_{}_to_{}'.format(
                 table,
                 self.gameid_bounds[0],
                 self.gameid_bounds[1]
             )
     
-            self.s3keys['create_{}_tmp'.format(table)] = execute_athena_query(
-                query=query,
-                database=self.database,
-                output_filename=output_filename,
-                boto3_client=athena
-            )
-            # wait for table to appear max 5 min
-            table_exists = check_key_exists(
-                bucket=self.destination_bucket,
-                key=self.table,
-                s3client=s3client,
-                max_time=300 # 300 seconds = 5 min
-            )
+            try:
+                self.s3keys['create_{}'.format(table)] = execute_athena_query(
+                    query=query,
+                    database=self.database,
+                    output_filename=output_filename,
+                    boto3_client=athena
+                )
+                # wait for table to appear max 10 min
+                table_exists = check_table_exists(
+                    database_name=self.database,
+                    table_name=table,
+                    max_time=600
+                )
+            
+            except Exception as err:
+                logger.error('Error creating {}'.format(table))
+
             if not table_exists:
                 raise FileNotFoundError('Table {} did not load'.format(table))
 
@@ -132,6 +148,11 @@ class ClosestToBallETL(object):
             delimiter=''
         )    
         # move closest_to_ball_tmp to closest_to_ball
+        logger.info('Move data gameids {} to {} from tmp to final'.format(
+            self.gameid_bounds[0],
+            self.gameid_bounds[1]
+        ))
+
         copy_bucket_contents(
             copy_source_keys=all_files,
             destination_bucket=self.destination_bucket,
@@ -155,6 +176,13 @@ class ClosestToBallETL(object):
             )
 
     def cleanup(self):
+        # meta data of df columns
+        columns = ['season', 'gameid', 'params', 'uploadedFLG', 'lastuploadDTS']
+        self.df_uploaded = get_uploaded_metadata(
+            self.uploaded_filepath,
+            columns=columns
+        )
+    
         # tmp files
         keys_ball_dist_tmp = get_bucket_content(
             bucket_name=self.destination_bucket,
@@ -167,21 +195,13 @@ class ClosestToBallETL(object):
             delimiter=''
         )    
 
-        # meta data of df columns
-        columns = ['season', 'gameid', 'params', 'uploadedFLG', 'lastuploadDTS']
-        self.df_uploaded = get_uploaded_metadata(
-            self.uploaded_filepath,
-            columns=columns
-        )
-
         # delete tmp keys and update metadata
-        # (wait up to 60 sec to see if file has been moved to destination folder)
 
         for file in (keys_ball_dist_tmp + keys_closest_to_ball_tmp):
             is_key_there = remove_bucket_contents(
                 bucket=self.destination_bucket,
                 key=file,
-                max_time=60,
+                max_time=0,
                 s3client=s3client
             )
         
@@ -189,20 +209,17 @@ class ClosestToBallETL(object):
                 df_uploaded=self.df_uploaded,
                 file=file,
                 uploadFLG=is_key_there,
-                params=self.s3keys
+                params=str(self.s3keys)
             )
     
         self.df_uploaded.to_parquet(fname=self.uploaded_filepath, compression='snappy')
   
     def run(self):
-        self.get_queries(
-            sql_path_balldist='player/create_table_ball_dist_tmp.sql',
-            sql_path_closest_to_ball='player/create_table_closest_to_ball_tmp.sql'
-        )
+        self.get_queries()
         self.create_tmp_tables()
         all_files = self.move_closest_to_ball_tmp_to_final()
         self.drop_tmp_tables()
-        self.cleanup(all_files)
+        self.cleanup()
 
 
 

@@ -1,13 +1,11 @@
-CREATE TABLE closest_to_ball_tmp WITH (
+CREATE TABLE IF NOT EXISTS closest_to_ball_tmp WITH (
     external_location = 's3://nba-game-info/closest_to_ball_tmp',
     format = 'PARQUET',
-    partitioned_by = ARRAY['season', 'game'],
+    partitioned_by = ARRAY['season', 'gameid'],
     parquet_compression = 'SNAPPY'
 ) AS (
     SELECT 
-          ball_dist_tmp.season
-        , ball_dist_tmp.gameid
-        , ball_dist_tmp.eventid
+          ball_dist_tmp.eventid
         , ball_dist_tmp.moment_num
         , ball_dist_tmp.timestamp_dts
         , ball_dist_tmp.timestamp_utc
@@ -21,6 +19,8 @@ CREATE TABLE closest_to_ball_tmp WITH (
         , ball_dist_tmp.z_coordinate
         , ball_dist_tmp.distance_from_ball_sq
         , rank_ball_dist.closest_to_ball_rank
+        , ball_dist_tmp.season
+        , ball_dist_tmp.gameid
     FROM nba.ball_dist_tmp
     LEFT JOIN ( -- rank_ball_dist
         SELECT 
@@ -32,9 +32,9 @@ CREATE TABLE closest_to_ball_tmp WITH (
             , ball_dist_tmp.playerid
             , ball_dist_tmp.distance_from_ball_sq
             , ROW_NUMBER() OVER (
-                PARTITION BY eventid, moment_num 
+                PARTITION BY season, gameid, eventid, moment_num 
                 ORDER BY distance_from_ball_sq)       AS closest_to_ball_rank   
-        FROM ball_dist
+        FROM nba.ball_dist_tmp
         WHERE playerid != -1 
         ) AS rank_ball_dist
     ON  ball_dist_tmp.season = rank_ball_dist.season

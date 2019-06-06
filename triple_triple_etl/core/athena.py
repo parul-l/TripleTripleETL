@@ -1,13 +1,18 @@
 import os
 import boto3
-
+import logging
+import time
 
 from triple_triple_etl.constants import ATHENA_OUTPUT
 
 
 athena = boto3.client('athena')
+glue = boto3.client('glue')
 s3 = boto3.resource('s3')
 
+# initiate logger
+logger = logging.getLogger()
+logger.setLevel('INFO')
 
 def execute_athena_query(
         query: str,
@@ -75,3 +80,30 @@ def get_query_s3filepath(
     response = boto3_client.get_query_execution(QueryExecutionId = execution_id)
 
     return response['QueryExecution']['ResultConfiguration']['OutputLocation']
+
+
+def check_table_exists(
+        database_name: str,
+        table_name: str,
+        max_time: int = 0
+):
+    response = glue.get_tables(DatabaseName=database_name, Expression=table_name)
+
+    time_to_appear = 0
+    time_increment = 1
+
+    while not response['TableList'] and time_to_appear <= max_time:    
+        time.sleep(time_increment)
+        time_to_appear += time_increment
+
+        response = glue.get_tables(DatabaseName=database_name, Expression=table_name)
+
+    if response['TableList']:
+        logger.info('It took {} seconds for the table to appear'.format(time_to_appear))
+        return 1
+    else:
+        logger.info('Table did not appear in the max time of {} seconds'.format(max_time))
+        return 0
+
+    
+

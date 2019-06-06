@@ -8,6 +8,7 @@ import os
 import pandas as pd
 import re
 import tempfile
+import time
 
 import boto3
 import patoolib
@@ -98,10 +99,10 @@ def check_key_exists(bucket: str, key: str, s3client, max_time: int = 0):
         time_to_appear += time_increment
     
     if response:
-        logger.info('It took {} seconds for the object to appear'.format(time_to_appear))
+        logger.info('It took {} seconds for {} to appear'.format(time_to_appear, key))
         return 1
     else:
-        logger.info('Object did not appear in the max time of {} seconds'.format(max_time))
+        logger.info('{} did not appear in the max time of {} seconds'.format(key, max_time))
         return 0
 
 
@@ -116,6 +117,7 @@ def copy_bucket_contents(
         destination_suffix = '/'.join(file.split('/')[1:]) # removes source_folder
         destination_key = '{}/{}'.format(destination_folder, destination_suffix)
 
+        logger.info('Copying {} in to {}'.format(file, destination_folder))
         # copy object in to destination    
         s3client.copy_object(
             Bucket=destination_bucket,
@@ -138,10 +140,11 @@ def remove_bucket_contents(
         max_time=max_time
     )
     if is_key_there:
+        logger.info('Removing {}'.format(key))
         # delete object from source
         s3client.delete_object(
-            Bucket=destination_bucket,
-            Key=destination_key
+            Bucket=bucket,
+            Key=key
         )
     else:
         # log the error

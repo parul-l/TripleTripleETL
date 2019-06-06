@@ -70,9 +70,7 @@ WITH ball_info AS (
     WHERE playerid != -1 -- remove the ball since some moments don't have it
 )
     SELECT 
-        ball_dist.season
-      , ball_dist.gameid
-      , ball_dist.eventid
+        ball_dist.eventid
       , ball_dist.moment_num
       , ball_dist.timestamp_dts
       , ball_dist.timestamp_utc
@@ -86,6 +84,8 @@ WITH ball_info AS (
       , ball_dist.z_coordinate
       , ball_dist.distance_from_ball_sq
       , rank_ball_dist.closest_to_ball_rank
+      , ball_dist.season
+      , ball_dist.gameid
     FROM ball_dist
     LEFT JOIN rank_ball_dist
       ON ball_dist.eventid = rank_ball_dist.eventid
