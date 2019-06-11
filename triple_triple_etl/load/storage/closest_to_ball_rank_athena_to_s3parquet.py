@@ -5,6 +5,7 @@ import os
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import re
 import shutil
 import tempfile
 
@@ -108,7 +109,6 @@ class ClosestToBallETL(object):
         with open(closest_to_ball_query_path) as f:
             self.query_closest_to_ball = f.read()
 
-
     def create_tmp_tables(self):
         tables = ['ball_dist_tmp', 'closest_to_ball_tmp']
         queries = [self.query_balldist, self.query_closest_to_ball]
@@ -128,11 +128,11 @@ class ClosestToBallETL(object):
                     output_filename=output_filename,
                     boto3_client=athena
                 )
-                # wait for table to appear max 10 min
+                # wait for table to appear max 5 min
                 table_exists = check_table_exists(
                     database_name=self.database,
                     table_name=table,
-                    max_time=600
+                    max_time=300
                 )
             
             except Exception as err:
@@ -161,6 +161,38 @@ class ClosestToBallETL(object):
         )
 
         return all_files
+
+
+    def alter_table(self, all_files: list):
+        all_gameids = [re.search('gameid=(.+?)/', key).group(1) for key in all_files]
+        
+        for gameid in set(all_gameids):
+            location = 's3://{}/closest_to_ball/season={}/gameid={}'.format(
+                self.destination_bucket,
+                self.season,
+                gameid
+            )
+            query_path = os.path.join(SQL_DIR, 'alter_table.sql')
+            
+            with open(query_path) as f:
+                query = f.read().format(
+                    'nba.closest_to_ball',
+                    self.season,
+                    gameid,
+                    location
+                )
+                try:
+                    logger.info('Adding gameid {} to closest_to_ball table'.format(gameid))
+                    self.s3keys['alter_table_{}'.format(gameid)] = execute_athena_query(
+                        query=query,
+                        database=self.database,
+                        output_filename='alter_table_{}'.format(gameid),
+                        boto3_client=athena
+                    )
+
+                except Exception as err:
+                    logger.error('Error adding row to table {}'.format(gameid))
+                    logger.error(err)
 
     def drop_tmp_tables(self):
         tables = ['ball_dist_tmp', 'closest_to_ball_tmp']
@@ -218,6 +250,7 @@ class ClosestToBallETL(object):
         self.get_queries()
         self.create_tmp_tables()
         all_files = self.move_closest_to_ball_tmp_to_final()
+        self.alter_table(all_files)
         self.drop_tmp_tables()
         self.cleanup()
 
