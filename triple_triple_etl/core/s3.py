@@ -16,9 +16,6 @@ import patoolib
 from triple_triple_etl.constants import DATASETS_DIR, META_DIR, LOGS_DIR
 from triple_triple_etl.log import get_logger
 
-# THIS_FILENAME = os.path.splitext(os.path.basename(__file__))[0]
-# LOG_FILENAME = '{}.log'.format(os.path.splitext(THIS_FILENAME)[0])
-# logger = get_logger(output_file=T)
 logger = logging.getLogger()
 logger.setLevel('INFO')
 
@@ -152,6 +149,7 @@ def remove_bucket_contents(
 
     return is_key_there        
 
+
 def rename_game_files(bucket_name: str):
     # restructuring "folder" structure
     all_files = get_game_files(bucket_name)
@@ -166,7 +164,6 @@ def rename_game_files(bucket_name: str):
 
         # delete old file name
         s3.Object(bucket_name, file).delete()
-
 
 
 def s3download(bucket_name: str, filename: str):
