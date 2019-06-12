@@ -71,9 +71,9 @@ def get_query_s3filepath(
             The boto3.client('athena') client.
     Returns
     -------
-    A `dict` of the query execution meta data. 
-    This has two keys:
-        `QueryExecution` and `ResponseMetadata`.
+        A `dict` of the query execution meta data. 
+        This has two keys:
+            `QueryExecution` and `ResponseMetadata`.
     """
 
     execution_id = execute_athena_response['QueryExecutionId']
