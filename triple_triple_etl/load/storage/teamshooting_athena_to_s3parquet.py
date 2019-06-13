@@ -1,4 +1,9 @@
 ########################################################################
+# This file loads the teamshootingside tables
+# Data is brought down locally before uploading again
+# This costs money on aws
+# See `closest_to_ball_rank` for a better method.
+
 # This file has two pipelines to load team_shooting_side data.
 # TeamShootingSideALL queries all games in the `nba.gamelog` database
 # and uploads the result to s3.
@@ -11,6 +16,7 @@ import os
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import shutil
 import tempfile
 
 from triple_triple_etl.constants import ATHENA_OUTPUT, META_DIR, SQL_DIR 
