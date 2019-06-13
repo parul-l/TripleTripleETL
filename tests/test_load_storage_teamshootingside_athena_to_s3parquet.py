@@ -1,15 +1,11 @@
 # TODO: Need to test TeamShootingSideETL
 
 import copy
-import io
 import boto3
 import moto
 import os
 import pandas as pd
-import shutil
-import tempfile
 import unittest
-import unittest.mock as mock
 
 from tests.fixtures.mock_teamshootingside_athena_to_s3parquet import (
     mock_df_uploaded
