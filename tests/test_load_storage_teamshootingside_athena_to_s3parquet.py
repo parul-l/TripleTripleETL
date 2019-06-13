@@ -6,6 +6,7 @@ import moto
 import os
 import pandas as pd
 import unittest
+import unittest.mock as mock
 
 from tests.fixtures.mock_teamshootingside_athena_to_s3parquet import (
     mock_df_uploaded
