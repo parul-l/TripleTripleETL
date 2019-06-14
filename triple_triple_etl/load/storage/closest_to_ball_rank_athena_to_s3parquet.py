@@ -96,7 +96,6 @@ class ClosestToBallETL(object):
     ):
         logger.info('Get queries for given gameids.')
 
-        # ball_dist
         ball_dist_query_path = os.path.join(SQL_DIR, sql_path_balldist)
         closest_to_ball_query_path = os.path.join(SQL_DIR, sql_path_closest_to_ball)
 
