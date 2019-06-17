@@ -1,9 +1,7 @@
-
 import io
 
 import boto3
 import mock
-import moto
 import unittest
 
 from triple_triple_etl.core.athena import (
@@ -19,7 +17,7 @@ class TestAthena(unittest.TestCase):
     """Tests for athena.py"""
 
     def test_execute_athena_query(self):
-        athena = boto3.client('athena')
+        athena = boto3.client('athena', region_name='us-east-1')
         s3 = boto3.client('s3', region_name='us-east-1')
         
         query = 'SELECT COUNT(*) FROM nba.teaminfo'
@@ -69,7 +67,6 @@ class TestAthena(unittest.TestCase):
     def test_check_table_exists(self):
         glue_mock = mock.Mock()
 
-        
         return_values = [['somelist'], []]
         expected_response = [1, 0]
 
