@@ -17,4 +17,4 @@
 
 
 
-[![CircleCI](https://circleci.com/gh/parul-l/TripleTripleETL.svg?style=shield)](https://circleci.com/gh/parul-l/TripleTripleETL)
+[![CircleCI](https://circleci.com/gh/parul-l/TripleTripleETL.svg?style=svg)](https://circleci.com/gh/parul-l/TripleTripleETL)
