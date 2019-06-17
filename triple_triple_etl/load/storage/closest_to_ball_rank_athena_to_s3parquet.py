@@ -23,9 +23,9 @@ from triple_triple_etl.core.s3 import (
 from triple_triple_etl.load.storage.load_helper import get_uploaded_metadata
 from triple_triple_etl.log import get_logger
 
-s3 = boto3.resource('s3')
-s3client = boto3.client('s3')
-athena = boto3.client('athena')
+s3 = boto3.resource('s3', region_name='us-east-1')
+s3client = boto3.client('s3', region_name='us-east-1')
+athena = boto3.client('athena', region_name='us-east-1')
 
 THIS_FILENAME = os.path.splitext(os.path.basename(__file__))[0]
 LOG_FILENAME = '{}.log'.format(os.path.splitext(THIS_FILENAME)[0])
