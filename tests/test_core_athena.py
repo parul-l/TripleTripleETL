@@ -20,7 +20,7 @@ class TestAthena(unittest.TestCase):
 
     def test_execute_athena_query(self):
         athena = boto3.client('athena')
-        s3 = boto3.client('s3')
+        s3 = boto3.client('s3', region_name='us-east-1')
         
         query = 'SELECT COUNT(*) FROM nba.teaminfo'
         output_filename = 'nosetest_execute_athena_query'

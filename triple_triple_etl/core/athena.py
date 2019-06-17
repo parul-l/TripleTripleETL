@@ -6,9 +6,9 @@ import time
 from triple_triple_etl.constants import ATHENA_OUTPUT
 
 
-athena = boto3.client('athena')
-glue = boto3.client('glue')
-s3 = boto3.resource('s3')
+athena = boto3.client('athena', region_name='us-east-1')
+glue = boto3.client('glue', region_name='us-east-1')
+s3 = boto3.resource('s3', region_name='us-east-1')
 
 # initiate logger
 logger = logging.getLogger()

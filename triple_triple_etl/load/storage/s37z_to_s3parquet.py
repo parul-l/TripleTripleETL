@@ -25,7 +25,7 @@ from triple_triple_etl.constants import (
 )
 
 
-s3 = boto3.client('s3')
+s3 = boto3.client('s3', region_name='us-east-1')
 # current filename without the extension
 LOG_FILENAME = '{}.log'.format(os.path.splitext(os.path.basename(__file__))[0])
 logger = get_logger(output_file=LOG_FILENAME)
