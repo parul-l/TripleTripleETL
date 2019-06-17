@@ -172,7 +172,7 @@ class TestNBAStatsS3ETL(unittest.TestCase):
 
     @moto.mock_s3
     def test_load(self):
-        s3 = boto3.resource('s3')
+        s3 = boto3.resource('s3', region_name='us-east-1')
         bucket = s3.Bucket('nba-game-info')
         bucket.create()
 

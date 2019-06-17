@@ -214,7 +214,7 @@ class TestS3FileFormatETL(unittest.TestCase):
         # _load input
         tablename = 'sometable'
 
-        s3 = boto3.resource('s3')
+        s3 = boto3.resource('s3', region_name='us-east-1')
         bucket = s3.Bucket(destination_bucket)
         bucket.create()
 

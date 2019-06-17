@@ -33,7 +33,7 @@ from triple_triple_etl.load.storage.load_helper import (
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-s3 = boto3.client('s3')
+s3 = boto3.client('s3', region_name='us-east-1')
 
 THIS_FILENAME = os.path.splitext(os.path.basename(__file__))[0]
 
