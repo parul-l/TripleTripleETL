@@ -1,7 +1,7 @@
 import io
-
 import boto3
 import mock
+import os
 import unittest
 
 from triple_triple_etl.core.athena import (
@@ -17,33 +17,55 @@ class TestAthena(unittest.TestCase):
     """Tests for athena.py"""
 
     def test_execute_athena_query(self):
-        athena = boto3.client('athena', region_name='us-east-1')
-        s3 = boto3.client('s3', region_name='us-east-1')
-        
-        query = 'SELECT COUNT(*) FROM nba.teaminfo'
-        output_filename = 'nosetest_execute_athena_query'
-        response = execute_athena_query(
+        boto3_client_mock = mock.Mock()
+        query = 'some query'
+        database = 'some database'
+        output_filename = 'some output'
+
+        _ = execute_athena_query(
             query=query,
-            database='nba',
+            database=database,
             output_filename=output_filename,
-            boto3_client=athena
-        )
-        # check query executed
-        self.assertEqual(
-            first=response['ResponseMetadata']['HTTPStatusCode'],
-            second=200
+            boto3_client=boto3_client_mock
         )
 
-        # remove test bucket
-        key_csv = '{}/{}.csv'.format(output_filename, response['QueryExecutionId'])
-        key_meta = '{}/{}.csv.metadata'.format(output_filename, response['QueryExecutionId'])
-        for key in [key_csv, key_meta]:
-            remove_bucket_contents(
-                bucket=ATHENA_OUTPUT,
-                key=key,
-                max_time=0,
-                s3client=s3,
-            )
+        boto3_client_mock.start_query_execution.assert_called_once_with(
+        QueryString=query,
+        QueryExecutionContext={'Database': database},
+        ResultConfiguration={
+            'OutputLocation': os.path.join('s3://', ATHENA_OUTPUT, output_filename)
+        }
+    )
+
+        
+
+
+        # athena = boto3.client('athena', region_name='us-east-1')
+        # s3 = boto3.client('s3', region_name='us-east-1')
+        # query = 'SELECT COUNT(*) FROM nba.teaminfo'
+        # output_filename = 'nosetest_execute_athena_query'
+        # response = execute_athena_query(
+        #     query=query,
+        #     database='nba',
+        #     output_filename=output_filename,
+        #     boto3_client=athena
+        # )
+        # # check query executed
+        # self.assertEqual(
+        #     first=response['ResponseMetadata']['HTTPStatusCode'],
+        #     second=200
+        # )
+
+        # # remove test bucket
+        # key_csv = '{}/{}.csv'.format(output_filename, response['QueryExecutionId'])
+        # key_meta = '{}/{}.csv.metadata'.format(output_filename, response['QueryExecutionId'])
+        # for key in [key_csv, key_meta]:
+        #     remove_bucket_contents(
+        #         bucket=ATHENA_OUTPUT,
+        #         key=key,
+        #         max_time=0,
+        #         s3client=s3,
+        #     )
     
     def test_get_query_s3filepath(self):
         athena_mock = mock.Mock()
