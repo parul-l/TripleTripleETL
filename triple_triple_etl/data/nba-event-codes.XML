@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sports-statistics>
+  <sports-event-codes>
+    <date year="2016" month="6" date="27" day="1"/>
+    <time hour="1" minute="15" second="31" timezone="Eastern" utc-hour="-4" utc-minute="00"/>
+    <version number="3"/>
+    <league global-id="1" name="National Basketball Assoc." alias="NBA" display-name=""/>
+      <season season="2016"/>
+      <event-codes>
+           <event id="1" text="Free Throw Made">
+             <detail id="0" text="Other"/>
+             <detail id="8" text="Free Throw 1st of 1-and-1"/>
+             <detail id="9" text="Free Throw 2nd of 1-and-1"/>
+             <detail id="10" text="Free Throw 1 of 1"/>
+             <detail id="11" text="Free Throw 1 of 2"/>
+             <detail id="12" text="Free Throw 2 of 2"/>
+             <detail id="13" text="Free Throw 1 of 3"/>
+             <detail id="14" text="Free Throw 2 of 3"/>
+             <detail id="15" text="Free Throw 3 of 3"/>
+             <detail id="16" text="Free Throw Technical"/>
+             <detail id="17" text="Free Throw Clear Path"/>
+             <detail id="18" text="Free Throw Flagrant 1 of 2"/>
+             <detail id="19" text="Free Throw Flagrant 2 of 2"/>
+             <detail id="20" text="Free Throw Flagrant 1 of 1"/>
+             <detail id="21" text="Free Throw Technical 1 of 2"/>
+             <detail id="22" text="Free Throw Technical 2 of 2"/>
+             <detail id="23" text="Free Throw Clear Path 1 of 2"/>
+             <detail id="24" text="Free Throw Clear Path 2 of 2"/>
+             <detail id="27" text="Free Throw Flagrant 1 of 3"/>
+             <detail id="28" text="Free Throw Flagrant 2 of 3"/>
+             <detail id="29" text="Free Throw Flagrant 3 of 3"/>
+           </event>
+           <event id="2" text="Free Throw Missed">
+             <detail id="0" text="Other"/>
+             <detail id="8" text="Free Throw 1st of 1-and-1"/>
+             <detail id="9" text="Free Throw 2nd of 1-and-1"/>
+             <detail id="10" text="Free Throw 1 of 1"/>
+             <detail id="11" text="Free Throw 1 of 2"/>
+             <detail id="12" text="Free Throw 2 of 2"/>
+             <detail id="13" text="Free Throw 1 of 3"/>
+             <detail id="14" text="Free Throw 2 of 3"/>
+             <detail id="15" text="Free Throw 3 of 3"/>
+             <detail id="16" text="Free Throw Technical"/>
+             <detail id="17" text="Free Throw Clear Path"/>
+             <detail id="18" text="Free Throw Flagrant 1 of 2"/>
+             <detail id="19" text="Free Throw Flagrant 2 of 2"/>
+             <detail id="20" text="Free Throw Flagrant 1 of 1"/>
+             <detail id="21" text="Free Throw Technical 1 of 2"/>
+             <detail id="22" text="Free Throw Technical 2 of 2"/>
+             <detail id="23" text="Free Throw Clear Path 1 of 2"/>
+             <detail id="24" text="Free Throw Clear Path 2 of 2"/>
+             <detail id="27" text="Free Throw Flagrant 1 of 3"/>
+             <detail id="28" text="Free Throw Flagrant 2 of 3"/>
+             <detail id="29" text="Free Throw Flagrant 3 of 3"/>
+           </event>
+           <event id="3" text="Field Goal Made">
+             <detail id="8" text="Slam Dunk Shot"/>
+             <detail id="40" text="Layup Shot"/>
+             <detail id="41" text="Running Layup Shot"/>
+             <detail id="42" text="Driving Layup Shot"/>
+             <detail id="43" text="Alley Oop Layup Shot"/>
+             <detail id="44" text="Reverse Layup Shot"/>
+             <detail id="45" text="Jump Shot"/>
+             <detail id="46" text="Running Jump Shot"/>
+             <detail id="47" text="Turnaround Jump Shot"/>
+             <detail id="48" text="Dunk Shot"/>
+             <detail id="49" text="Driving Dunk Shot"/>
+             <detail id="50" text="Running Dunk Shot"/>
+             <detail id="51" text="Reverse Dunk Shot"/>
+             <detail id="52" text="Alley Oop Dunk Shot"/>
+             <detail id="53" text="Tip Shot"/>
+             <detail id="54" text="Running Tip Shot"/>
+             <detail id="55" text="Hook Shot"/>
+             <detail id="56" text="Running Hook Shot"/>
+             <detail id="57" text="Driving Hook Shot"/>
+             <detail id="58" text="Turnaround Hook Shot"/>
+             <detail id="59" text="Finger Roll Shot"/>
+             <detail id="60" text="Running Finger Roll Shot"/>
+             <detail id="61" text="Driving Finger Roll Shot"/>
+             <detail id="62" text="Turnaround Finger Roll Shot"/>
+             <detail id="63" text="Fade Away"/>
+             <detail id="64" text="Jump Hook"/>
+             <detail id="65" text="Follow Up Dunk"/>
+             <detail id="66" text="Bank Shot"/>
+             <detail id="67" text="Hook Bank Shot"/>
+             <detail id="68" text="Finger Roll Layup Shot"/>
+             <detail id="69" text="Putback Layup Shot"/>
+             <detail id="70" text="Driving Reverse Layup Shot"/>
+             <detail id="71" text="Running Reverse Layup Shot"/>
+             <detail id="72" text="Driving Finger Roll Layup Shot"/>
+             <detail id="73" text="Running Finger Roll Layup Shot"/>
+             <detail id="74" text="Driving Jump Shot"/>
+             <detail id="75" text="Floating Jump Shot"/>
+             <detail id="76" text="Pull Up Jump Shot"/>
+             <detail id="77" text="Step Back Jump Shot"/>
+             <detail id="78" text="Pull Up Bank Jump Shot"/>
+             <detail id="79" text="Driving Bank Jump Shot"/>
+             <detail id="80" text="Fade Away Bank Jump Shot"/>
+             <detail id="81" text="Running Bank Jump Shot"/>
+             <detail id="82" text="Turnaround Bank Jump Shot"/>
+             <detail id="83" text="Turnaround Fade Away Jump Shot"/>
+             <detail id="84" text="Putback Dunk Shot"/>
+             <detail id="85" text="Driving Slam Dunk Shot"/>
+             <detail id="86" text="Reverse Slam Dunk Shot"/>
+             <detail id="87" text="Running Slam Dunk Shot"/>
+             <detail id="88" text="Putback Reverse Dunk Shot"/>
+             <detail id="89" text="Putback Slam Dunk Shot"/>
+             <detail id="90" text="Driving Bank Hook Shot"/>
+             <detail id="91" text="Jump Bank Hook Shot"/>
+             <detail id="92" text="Running Bank Hook Shot"/>
+             <detail id="93" text="Turnaround Bank Hook Shot"/>
+             <detail id="94" text="Unknown Shot"/>
+             <detail id="95" text="No Shot"/>
+             <detail id="96" text="Tip Layup Shot"/>
+             <detail id="97" text="Cutting Layup Shot"/>
+             <detail id="98" text="Cutting Finger Roll Layup Shot"/>
+             <detail id="99" text="Running Alley Oop Layup Shot"/>
+             <detail id="100" text="Driving Floating Jump Shot"/>
+             <detail id="101" text="Driving Floating Bank Jump Shot"/>
+             <detail id="102" text="Running Pull-Up Jump Shot"/>
+             <detail id="103" text="Step Back Bank Jump Shot"/>
+             <detail id="104" text="Turnaround Fadeaway Bank Jump Shot"/>
+             <detail id="105" text="Running Alley Oop Dunk Shot"/>
+             <detail id="106" text="Tip Dunk Shot"/>
+             <detail id="107" text="Cutting Dunk Shot"/>
+             <detail id="108" text="Driving Reverse Dunk Shot"/>
+             <detail id="109" text="Running Reverse Dunk Shot"/>
+           </event>
+           <event id="4" text="Field Goal Missed">
+             <detail id="8" text="Slam Dunk Shot"/>
+             <detail id="40" text="Layup Shot"/>
+             <detail id="41" text="Running Layup Shot"/>
+             <detail id="42" text="Driving Layup Shot"/>
+             <detail id="43" text="Alley Oop Layup Shot"/>
+             <detail id="44" text="Reverse Layup Shot"/>
+             <detail id="45" text="Jump Shot"/>
+             <detail id="46" text="Running Jump Shot"/>
+             <detail id="47" text="Turnaround Jump Shot"/>
+             <detail id="48" text="Dunk Shot"/>
+             <detail id="49" text="Driving Dunk Shot"/>
+             <detail id="50" text="Running Dunk Shot"/>
+             <detail id="51" text="Reverse Dunk Shot"/>
+             <detail id="52" text="Alley Oop Dunk Shot"/>
+             <detail id="53" text="Tip Shot"/>
+             <detail id="54" text="Running Tip Shot"/>
+             <detail id="55" text="Hook Shot"/>
+             <detail id="56" text="Running Hook Shot"/>
+             <detail id="57" text="Driving Hook Shot"/>
+             <detail id="58" text="Turnaround Hook Shot"/>
+             <detail id="59" text="Finger Roll Shot"/>
+             <detail id="60" text="Running Finger Roll Shot"/>
+             <detail id="61" text="Driving Finger Roll Shot"/>
+             <detail id="62" text="Turnaround Finger Roll Shot"/>
+             <detail id="63" text="Fade Away"/>
+             <detail id="64" text="Jump Hook"/>
+             <detail id="65" text="Follow Up Dunk"/>
+             <detail id="66" text="Bank Shot"/>
+             <detail id="67" text="Hook Bank Shot"/>
+             <detail id="68" text="Finger Roll Layup Shot"/>
+             <detail id="69" text="Putback Layup Shot"/>
+             <detail id="70" text="Driving Reverse Layup Shot"/>
+             <detail id="71" text="Running Reverse Layup Shot"/>
+             <detail id="72" text="Driving Finger Roll Layup Shot"/>
+             <detail id="73" text="Running Finger Roll Layup Shot"/>
+             <detail id="74" text="Driving Jump Shot"/>
+             <detail id="75" text="Floating Jump Shot"/>
+             <detail id="76" text="Pull Up Jump Shot"/>
+             <detail id="77" text="Step Back Jump Shot"/>
+             <detail id="78" text="Pull Up Bank Jump Shot"/>
+             <detail id="79" text="Driving Bank Jump Shot"/>
+             <detail id="80" text="Fade Away Bank Jump Shot"/>
+             <detail id="81" text="Running Bank Jump Shot"/>
+             <detail id="82" text="Turnaround Bank Jump Shot"/>
+             <detail id="83" text="Turnaround Fade Away Jump Shot"/>
+             <detail id="84" text="Putback Dunk Shot"/>
+             <detail id="85" text="Driving Slam Dunk Shot"/>
+             <detail id="86" text="Reverse Slam Dunk Shot"/>
+             <detail id="87" text="Running Slam Dunk Shot"/>
+             <detail id="88" text="Putback Reverse Dunk Shot"/>
+             <detail id="89" text="Putback Slam Dunk Shot"/>
+             <detail id="90" text="Driving Bank Hook Shot"/>
+             <detail id="91" text="Jump Bank Hook Shot"/>
+             <detail id="92" text="Running Bank Hook Shot"/>
+             <detail id="93" text="Turnaround Bank Hook Shot"/>
+             <detail id="94" text="Unknown Shot"/>
+             <detail id="95" text="No Shot"/>
+             <detail id="96" text="Tip Layup Shot"/>
+             <detail id="97" text="Cutting Layup Shot"/>
+             <detail id="98" text="Cutting Finger Roll Layup Shot"/>
+             <detail id="99" text="Running Alley Oop Layup Shot"/>
+             <detail id="100" text="Driving Floating Jump Shot"/>
+             <detail id="101" text="Driving Floating Bank Jump Shot"/>
+             <detail id="102" text="Running Pull-Up Jump Shot"/>
+             <detail id="103" text="Step Back Bank Jump Shot"/>
+             <detail id="104" text="Turnaround Fadeaway Bank Jump Shot"/>
+             <detail id="105" text="Running Alley Oop Dunk Shot"/>
+             <detail id="106" text="Tip Dunk Shot"/>
+             <detail id="107" text="Cutting Dunk Shot"/>
+             <detail id="108" text="Driving Reverse Dunk Shot"/>
+             <detail id="109" text="Running Reverse Dunk Shot"/>
+           </event>
+           <event id="5" text="Offensive Rebound">
+             <detail id="1" text="Placeholder"/>
+           </event>
+           <event id="6" text="Defensive Rebound">
+             <detail id="1" text="Placeholder"/>
+           </event>
+           <event id="7" text="Turnover">
+             <detail id="1" text="Bad Pass"/>
+             <detail id="2" text="Lost Ball"/>
+             <detail id="3" text="Out of Bounds"/>
+             <detail id="4" text="Traveling"/>
+             <detail id="5" text="Offensive Foul-Charge"/>
+             <detail id="6" text="Double Dribble"/>
+             <detail id="7" text="Discontinue Dribble"/>
+             <detail id="8" text="3 Second Violation"/>
+             <detail id="9" text="5 Second Violation"/>
+             <detail id="10" text="10 Second Violation"/>
+             <detail id="11" text="Shot Clock Turnover"/>
+             <detail id="12" text="Inbound Turnover"/>
+             <detail id="13" text="Backcourt Turnover"/>
+             <detail id="14" text="Illegal Pick"/>
+             <detail id="15" text="Offensive Goaltending"/>
+             <detail id="16" text="Isolation Violation"/>
+             <detail id="17" text="Lane Violation"/>
+             <detail id="18" text="Jump Ball Violation"/>
+             <detail id="19" text="Kicked Ball Violation"/>
+             <detail id="20" text="Illegal Assist Turnover"/>
+             <detail id="21" text="Palming Turnover"/>
+             <detail id="22" text="Post Up Turnover"/>
+             <detail id="23" text="Lost Ball Out of Bounds"/>
+             <detail id="24" text="Swinging Elbows Turnover"/>
+             <detail id="25" text="Illegal Screen Turnover"/>
+             <detail id="26" text="Stepped Out of Bounds"/>
+             <detail id="27" text="8 Second Violation"/>
+             <detail id="28" text="Stolen Pass Turnover"/>
+             <detail id="29" text="Enter Basket from Below"/>
+             <detail id="30" text="Punched Ball"/>
+             <detail id="31" text="Double Personal Turnover"/>
+             <detail id="32" text="Opposite Basket Turnover"/>
+             <detail id="33" text="Excess Timeout Turnover"/>
+             <detail id="34" text="Player Out of Bounds Violation"/>
+             <detail id="44" text="Too Many Players Turnover"/>
+             <detail id="45" text="Out of Bounds - Bad Pass Turnover"/>
+           </event>
+           <event id="8" text="Foul">
+             <detail id="1" text="Personal"/>
+             <detail id="2" text="Shooting"/>
+             <detail id="3" text="Loose Ball"/>
+             <detail id="4" text="Offensive"/>
+             <detail id="5" text="Inbound"/>
+             <detail id="6" text="Away From Play"/>
+             <detail id="7" text="Elbow"/>
+             <detail id="8" text="Punching"/>
+             <detail id="9" text="Clear Path"/>
+             <detail id="10" text="Double Personal"/>
+             <detail id="11" text="Technical"/>
+             <detail id="12" text="Non Supported Technical"/>
+             <detail id="13" text="Hanging Technical"/>
+             <detail id="14" text="Flagrant Type 1"/>
+             <detail id="15" text="Flagrant Type 2"/>
+             <detail id="16" text="Double Technical"/>
+             <detail id="17" text="Illegal Defense"/>
+             <detail id="18" text="Delay Technical"/>
+             <detail id="19" text="Taunting Technical"/>
+             <detail id="20" text="Player Control Foul"/>
+             <detail id="21" text="Flagrant"/>
+             <detail id="22" text="Charging"/>
+             <detail id="23" text="Excess Timeout Tech Foul"/>
+             <detail id="26" text="Offensive Charge Foul"/>
+             <detail id="27" text="Personal Block Foul"/>
+             <detail id="28" text="Personal Take Foul"/>
+             <detail id="29" text="Shooting Block Foul"/>
+             <detail id="30" text="Too Many Players Technical"/>
+             <detail id="31" text="Admin Technical Foul"/>
+           </event>
+           <event id="9" text="Violation">
+             <detail id="1" text="Delay of Game"/>
+             <detail id="2" text="Illegal Defense"/>
+             <detail id="3" text="Defensive Goaltending"/>
+             <detail id="4" text="Lane"/>
+             <detail id="5" text="Jump Ball"/>
+             <detail id="6" text="Kicked Ball"/>
+             <detail id="7" text="Double Lane"/>
+           </event>
+           <event id="10" text="Substitution"/> 
+           <event id="11" text="Timeout">
+             <detail id="1" text="Regular"/>
+             <detail id="2" text="Short"/>
+             <detail id="3" text="Official TV"/>
+             <detail id="4" text="Official"/>
+             <detail id="5" text="Advance"/>
+           </event>
+           <event id="12" text="Jump Ball"/> 
+           <event id="13" text="Ejection">
+             <detail id="1" text="Second Technical"/>
+             <detail id="2" text="Second Flagrant Type 1"/>
+             <detail id="3" text="First Flagrant Type 2"/>
+             <detail id="4" text="Other"/>
+           </event>
+           <event id="14" text="Start Period"/> 
+           <event id="15" text="End Period"/> 
+           <event id="16" text="Clock Sync">
+             <detail id="1" text="Clock Start"/>
+             <detail id="2" text="Clock Stop"/>
+             <detail id="3" text="Clock Inc"/>
+             <detail id="4" text="Clock Dec"/>
+             <detail id="5" text="Auto Clock"/>
+           </event>
+           <event id="17" text="Instant Replay">
+             <detail id="1" text="Support Ruling"/>
+             <detail id="2" text="Overturn Ruling"/>
+             <detail id="3" text="Altercation"/>
+           </event>
+           <event id="18" text="Replay Ruling">
+             <detail id="1" text="Good Basket"/>
+             <detail id="2" text="Good Basket 2 to 3"/>
+             <detail id="3" text="Good Basket 3 to 2"/>
+             <detail id="4" text="No Basket"/>
+             <detail id="5" text="No Basket 2 to 3"/>
+             <detail id="6" text="No Basket 3 to 2"/>
+             <detail id="7" text="Foul Before Expiration"/>
+             <detail id="8" text="Foul After Expiration"/>
+             <detail id="9" text="Shot Clock Violation"/>
+             <detail id="10" text="Other Ruling"/>
+             <detail id="11" text="Flagrant Foul 2 to 1"/>
+             <detail id="12" text="Flagrant Foul 2 to Personal"/>
+             <detail id="13" text="Flagrant Foul Upheld"/>
+             <detail id="14" text="Clock Start Early"/>
+             <detail id="15" text="Clock Start Late"/>
+             <detail id="16" text="Clock Stop Early"/>
+             <detail id="17" text="Clock Stop Late"/>
+             <detail id="18" text="Clock Other Issue"/>
+             <detail id="19" text="DUR 2FG"/>
+             <detail id="20" text="DUR 3FG"/>
+             <detail id="21" text="DUR 2FT"/>
+             <detail id="22" text="DUR 3FT"/>
+             <detail id="43" text="Off Ball Foul Before Inbounds"/>
+             <detail id="44" text="Off Ball Foul After Inbounds"/>
+             <detail id="45" text="Off Ball Foul Before FGM"/>
+             <detail id="46" text="Off Ball Foul After FGM"/>
+             <detail id="47" text="Restricted Area Def Moving"/>
+           </event>
+           <event id="19" text="Game Over"/> 
+           <event id="20" text="Stoppage"/> 
+           <event id="21" text="Dribble"/> 
+           <event id="22" text="Pass"/> 
+           <event id="23" text="Possession"/> 
+           <event id="24" text="Blocked Shot"/> 
+           <event id="25" text="Assist"/> 
+           <event id="26" text="Drive"/> 
+           <event id="27" text="Screen"/> 
+           <event id="28" text="Delay"/> 
+      </event-codes>
+  </sports-event-codes>
+</sports-statistics>
