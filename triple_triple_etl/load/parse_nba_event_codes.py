@@ -29,15 +29,15 @@ def parse_event_code(event: xml.etree.ElementTree.Element):
         event_group = [
             [ 
                 int(event_code),
-                event_action,
+                event_action.lower(),
                 int(subevent.attrib['id']),
-                subevent.attrib['text']
+                subevent.attrib['text'].lower()
                 
             ]
             for subevent in event.iter('detail')
         ]
     else:
-        event_group = [[event_code, event_action, None, None]]
+        event_group = [[int(event_code), event_action.lower(), None, None]]
 
     columns = ['event_code', 'event_action', 
                'event_subcode', 'event_subaction']
@@ -68,7 +68,4 @@ if __name__ == '__main__':
     
     # convert to xml
     etree_root = ET.fromstring(data)
-    df_codes = event_codes_to_pandas(
-        etree_root=etree_root,
-        branch='.sports-event-codes/event-codes/event'
-    )
+    df_codes = event_codes_to_pandas(etree_root=etree_root)
