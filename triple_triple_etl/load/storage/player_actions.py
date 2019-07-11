@@ -3,7 +3,9 @@
 # the event_code in (1) does not match with the eventmsgtype in (2) directly - seems off by 2 integers
 # the subevent_code in (1) seems to match with eventactionmsgtype in (2)
 # (1) has 28 different types of events, (2) only have 12 or 13
-
+# the sql code sql/player/create_table_player_actions_tmp.sql creates the table
+# this file player_actions.py is very similar to closest_to_ball_rank_athena_to_s3parquet.py
+# TODO: Probably make one ETL
 
 import boto3
 import datetime
