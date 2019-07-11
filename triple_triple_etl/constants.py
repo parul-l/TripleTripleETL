@@ -9,7 +9,7 @@ config = configparser.ConfigParser()
 config.read(os.path.join(MODULE_HOME, 'params.cfg'))
 
 
-DATA_DIR = os.path.abspath(config['path']['data_dir'])
+DATATABLES_DIR = os.path.abspath(config['path']['datatables_dir'])
 DATASETS_DIR = os.path.abspath(config['path']['datasets_dir'])
 LOGS_DIR = os.path.abspath(config['path']['logs_dir'])
 SQL_DIR = os.path.abspath(config['path']['sql_dir'])
