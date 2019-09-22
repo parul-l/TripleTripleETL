@@ -14,6 +14,7 @@ s3 = boto3.resource('s3', region_name='us-east-1')
 logger = logging.getLogger()
 logger.setLevel('INFO')
 
+
 def execute_athena_query(
         query: str,
         database: str,
