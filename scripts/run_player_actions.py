@@ -1,7 +1,7 @@
 import time
 import numpy as np
 
-from triple_triple_etl.core.s3 import get_bucket_content
+from triple_triple_etl.core.s3 import s3client, get_bucket_content, remove_bucket_contents
 from triple_triple_etl.load.storage.player_actions import (
     PlayerActionsETL
 )
@@ -18,13 +18,45 @@ if __name__ == '__main__':
         for x in get_bucket_content(bucket_name, prefix_game)
     ]
 
-    
-    for i in range(850, len(playbyplay_gameids), 20):
-        block = sorted(playbyplay_gameids)[i: i + 10]
+    bad_gameids = []
+
+    for gameid in playbyplay_gameids[970:]:
+        # get player_actions content:
+        try:
+            keys_player_actions = get_bucket_content(
+                bucket_name='nba-game-info',
+                prefix='player_actions/season=2015-2016/gameid={}'.format(gameid),
+                delimiter=''
+            )
+            for file in keys_player_actions:
+                is_key_there = remove_bucket_contents(
+                    bucket='nba-game-info',
+                    key=file,
+                    max_time=0,
+                    s3client=s3client
+                )
+        except:
+            bad_gameids.append(gameid)
+        
         etl = PlayerActionsETL(
             season=season,
-            gameid_bounds=[block[0], block[-1]]
+            gameid_bounds=[gameid, gameid]
         )
         etl.run()
 
-        time.sleep(300)
+
+# bad gameids
+# ['0021500016',
+#  '0021500101',
+#  '0021500102',
+#  '0021500108',
+#  '0021500177',
+#  '0021500240',
+#  '0021500264',
+#  '0021500327',
+#  '0021500394',
+#  '0021500398',
+#  '0021500456',
+#  '0021500489',
+#  '0021500631',
+#  '0021500761']
